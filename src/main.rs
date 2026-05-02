@@ -10,6 +10,6 @@ async fn main() {
     let mut shell = Shell::new();
 
     let _ = shell
-        .run::<Token, Interpreter, Tokenizer, CommandProvider>()
+        .run::<Token, Interpreter, CommandProvider, Tokenizer>()
         .await;
 }
