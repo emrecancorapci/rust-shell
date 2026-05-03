@@ -29,7 +29,7 @@ impl ShellCommand<Token> for Type {
                     "Third token shouldn't be a space. Fix this.",
                 ))
             }
-            Token::Value(input) => match input.get_exec_path() {
+            Token::Value(input) | Token::String(input, _) => match input.get_exec_path() {
                 Some(path) => return Ok(format!("{} is {}", input, path.to_str().unwrap())),
                 None => {
                     return Err(Error::new(
@@ -39,15 +39,6 @@ impl ShellCommand<Token> for Type {
                 }
             },
             Token::Argument(_, _) => todo!(),
-            Token::String(input, _) => match input.get_exec_path() {
-                Some(path) => return Ok(format!("{} is {}", input, path.to_str().unwrap())),
-                None => {
-                    return Err(Error::new(
-                        ErrorKind::InvalidInput,
-                        format!("{} not found", input),
-                    ))
-                }
-            },
             _ => {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
