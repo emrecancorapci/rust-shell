@@ -2,7 +2,7 @@ use std::io::ErrorKind;
 
 use shell_starter_rust::{
     shell::core::ShellTokenizer,
-    tokenizer::{
+    modules::tokenizer::{
         Token::{self, Appender, Argument, Redirector, Space, String, Value},
         Tokenizer,
     },

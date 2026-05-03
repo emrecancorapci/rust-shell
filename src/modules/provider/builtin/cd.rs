@@ -3,7 +3,7 @@ use std::{
     io::{Error, ErrorKind},
 };
 
-use crate::{shell::core::ShellCommand, tokenizer::Token};
+use crate::{modules::tokenizer::Token, shell::core::ShellCommand};
 pub struct Cd {}
 
 impl ShellCommand<Token> for Cd {

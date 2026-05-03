@@ -1,7 +1,8 @@
 use std::io::{Error, ErrorKind};
 
 use crate::{
-    provider::SUPPORTED_COMMANDS, shell::core::ShellCommand, tokenizer::Token,
+    modules::{provider::SUPPORTED_COMMANDS, tokenizer::Token},
+    shell::core::ShellCommand,
     util::path::ExecutionPath,
 };
 
@@ -16,12 +17,14 @@ impl ShellCommand<Token> for Type {
             ));
         }
 
+        // TODO[BUG]: Looks for second index. It should be the first value token after the command.
         for command in SUPPORTED_COMMANDS.iter() {
             if tokens.get(2) == Some(&Token::Value(command.to_string())) {
                 return Ok(format!("{} is a shell builtin", command));
             }
         }
 
+        // TODO[BUG]: Also happens here.
         match tokens.get(2).unwrap() {
             Token::Space => {
                 return Err(Error::new(

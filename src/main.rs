@@ -1,8 +1,10 @@
 use shell_starter_rust::{
-    interpreter::Interpreter,
-    provider::CommandProvider,
+    modules::{
+        interpreter::Interpreter,
+        provider::CommandProvider,
+        tokenizer::{Token, Tokenizer},
+    },
     shell::Shell,
-    tokenizer::{Token, Tokenizer},
 };
 
 #[tokio::main]

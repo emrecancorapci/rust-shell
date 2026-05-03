@@ -2,7 +2,7 @@ use std::{collections::HashSet, env};
 
 use crate::{
     shell::core::{ShellCommand, ShellCommandProvider},
-    tokenizer::Token,
+    modules::tokenizer::Token,
 };
 
 use builtin::{cd::Cd, echo::Echo, exit::Exit, pwd::Pwd, type_::Type};

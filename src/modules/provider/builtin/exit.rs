@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use crate::{shell::core::ShellCommand, tokenizer::Token};
+use crate::{shell::core::ShellCommand, modules::tokenizer::Token};
 
 pub struct Exit {}
 

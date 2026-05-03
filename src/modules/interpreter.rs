@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     shell::core::{ShellCommandProvider, ShellInterpreter},
-    tokenizer::Token,
+    modules::tokenizer::Token,
     util::{error::AsBytes, output::SplitOutput, path::ExecutionPath},
 };
 

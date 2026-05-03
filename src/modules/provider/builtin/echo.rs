@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use crate::{shell::core::ShellCommand, tokenizer::Token};
+use crate::{modules::tokenizer::Token, shell::core::ShellCommand};
 pub struct Echo {}
 
 impl ShellCommand<Token> for Echo {
