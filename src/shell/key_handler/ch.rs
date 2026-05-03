@@ -28,6 +28,8 @@ impl Shell {
             execute!(self.stdout, Print(ch))?;
         }
 
+        self.tab_index = 0;
+        self.tab_query = String::new();
         Ok(())
     }
 }

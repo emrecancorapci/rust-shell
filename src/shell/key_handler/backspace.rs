@@ -28,6 +28,9 @@ impl Shell {
         if relative_cursor_x <= self.buffer.len() {
             execute!(self.stdout, MoveLeft(1))?;
         }
+
+        self.tab_index = 0;
+        self.tab_query = String::new();
         Ok(())
     }
 }

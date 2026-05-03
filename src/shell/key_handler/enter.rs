@@ -24,6 +24,7 @@ impl Shell {
                 Ok(bytes) => {
                     let output = str::from_utf8(&bytes).unwrap();
                     let formatted = output.replace('\n', "\r\n");
+
                     execute!(self.stdout, Print(&formatted), MoveToColumn(0))?;
                 }
                 Err(err) => {
@@ -34,8 +35,11 @@ impl Shell {
                 }
             }
         }
+
         execute!(self.stdout, Print("\r\n"), Print(super::PREFIX))?;
 
+        self.tab_index = 0;
+        self.tab_query = String::new();
         self.buffer.clear();
         Ok(())
     }

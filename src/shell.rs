@@ -15,6 +15,10 @@ pub struct Shell {
     buffer: String,
     stdout: Stdout,
     stderr: Stderr,
+
+    // Auto Complete
+    tab_query: String,
+    tab_index: u8,
     // history: Vec<String>,
 }
 
@@ -24,6 +28,8 @@ impl Shell {
             buffer: String::new(),
             stdout: io::stdout(),
             stderr: io::stderr(),
+            tab_index: 0,
+            tab_query: String::new(),
             // history: Vec::new(),
         }
     }
