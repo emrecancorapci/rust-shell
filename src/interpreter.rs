@@ -25,7 +25,16 @@ impl Interpreter {
     fn handle_direct_input<CP: ShellCommandProvider<Token>>(
         tokens: &[Token],
     ) -> Result<Vec<u8>, Error> {
-        match tokens.first().unwrap() {
+        let cmd_token = tokens.iter().find(|token| match token {
+            Token::Value(_) => true,
+            _ => false,
+        });
+
+        if cmd_token.is_none() {
+            return Err(Error::new(ErrorKind::InvalidInput, "error: no command provided"))
+        }
+
+        match cmd_token.unwrap() {
             Token::Value(cmd) | Token::String(cmd, _) if cmd.get_exec_path().is_some() => {
                 let output = Self::execute_external(tokens, cmd)?;
 
