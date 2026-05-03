@@ -8,8 +8,9 @@ pub mod util {
     pub mod path;
 }
 pub mod modules {
+    mod event_handler;
     pub mod interpreter;
-    pub mod tokenizer;
     pub mod provider;
+    pub mod tokenizer;
 }
 pub mod shell;

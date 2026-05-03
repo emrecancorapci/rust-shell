@@ -2,23 +2,21 @@ use std::io::{self, Error, ErrorKind, Stderr, Stdout, Write};
 
 use core::{ShellCommandProvider, ShellInterpreter, ShellTokenizer};
 use crossterm::{
-    event::{self, Event},
     execute,
     style::Print,
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 
 pub mod core;
-pub mod key_handler;
 
 pub struct Shell {
-    buffer: String,
-    stdout: Stdout,
-    stderr: Stderr,
+    pub(crate) buffer: String,
+    pub(crate) stdout: Stdout,
+    pub(crate) stderr: Stderr,
 
     // Auto Complete
-    tab_query: String,
-    tab_index: u8,
+    pub(crate) tab_query: String,
+    pub(crate) tab_index: u8,
     // history: Vec<String>,
 }
 
@@ -47,7 +45,7 @@ impl Shell {
         loop {
             self.stdout.flush()?;
 
-            let result = self.shell_loop::<T, I, C, K>();
+            let result = self.handle_event::<T, I, C, K>();
 
             if result.is_err() && result.unwrap_err().kind() == ErrorKind::Interrupted {
                 break;
@@ -57,19 +55,6 @@ impl Shell {
         self.uninit()?;
 
         Ok(())
-    }
-
-    fn shell_loop<T, I: ShellInterpreter<T>, C: ShellCommandProvider<T>, K: ShellTokenizer<T>>(
-        &mut self,
-    ) -> Result<(), Error> {
-        match event::read()? {
-            Event::FocusGained => todo!(),
-            Event::FocusLost => todo!(),
-            Event::Key(key_event) => self.handle_keys::<T, I, C, K>(key_event),
-            Event::Mouse(_) => todo!(),
-            Event::Paste(_) => todo!(),
-            Event::Resize(_, _) => todo!(),
-        }
     }
 
     fn init(&mut self) -> Result<(), Error> {

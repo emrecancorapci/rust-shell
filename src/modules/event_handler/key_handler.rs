@@ -19,7 +19,7 @@ mod tab;
 const PREFIX: &str = "$ ";
 
 impl Shell {
-    pub(crate) fn handle_keys<
+    pub fn handle_keys<
         T,
         I: ShellInterpreter<T>,
         C: ShellCommandProvider<T>,
