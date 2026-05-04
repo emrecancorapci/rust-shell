@@ -8,4 +8,4 @@
 
 set -e # Exit on failure
 
-exec /tmp/codecrafters-http-server-rust/release/http-server-starter-rust "$@"
+exec /tmp/codecrafters-build-shell-rust/release/codecrafters-shell "$@"
