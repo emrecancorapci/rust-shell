@@ -23,7 +23,7 @@ impl ShellCommandProvider<Token> for CommandProvider {
             "cd" => Cd::run(tokens),
             _ => Err(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
-                "shell: command not found",
+                format!("{}: command not found", cmd),
             )),
         }
     }
