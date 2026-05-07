@@ -5,8 +5,8 @@ use std::{
 };
 
 use crate::{
-    shell::core::{ShellCommandProvider, ShellInterpreter},
     modules::tokenizer::Token,
+    shell::core::{ShellCommandProvider, ShellInterpreter},
     util::{error::AsBytes, output::SplitOutput, path::ExecutionPath},
 };
 
@@ -31,7 +31,10 @@ impl Interpreter {
         });
 
         if cmd_token.is_none() {
-            return Err(Error::new(ErrorKind::InvalidInput, "error: no command provided"))
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                "error: no command provided",
+            ));
         }
 
         match cmd_token.unwrap() {
@@ -115,6 +118,13 @@ impl Interpreter {
 
         match redirection_tokens.first().unwrap() {
             Token::Redirector('1') => {
+                if output.is_none() {
+                    return match error {
+                        Some(err) => Err(err),
+                        None => Ok(vec![]),
+                    };
+                }
+
                 fs::write(path, output.unwrap())?;
 
                 match error {
@@ -123,6 +133,13 @@ impl Interpreter {
                 }
             }
             Token::Redirector('2') => {
+                if error.is_none() {
+                    return match output {
+                        Some(output) => Ok(output),
+                        None => Ok(vec![]),
+                    };
+                }
+
                 fs::write(path, error.unwrap().to_string().as_bytes())?;
 
                 match output {
@@ -131,6 +148,13 @@ impl Interpreter {
                 }
             }
             Token::Appender('1') => {
+                if output.is_none() {
+                    return match error {
+                        Some(err) => Err(err),
+                        None => Ok(vec![]),
+                    };
+                }
+
                 Self::append_to_file(&path, &output.unwrap())?;
 
                 match error {
@@ -139,6 +163,13 @@ impl Interpreter {
                 }
             }
             Token::Appender('2') => {
+                if error.is_none() {
+                    return match output {
+                        Some(output) => Ok(output),
+                        None => Ok(vec![]),
+                    };
+                }
+
                 Self::append_to_file(&path, &error.unwrap().as_bytes())?;
 
                 match output {
