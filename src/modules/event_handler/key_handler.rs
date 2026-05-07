@@ -40,17 +40,19 @@ impl Shell {
             KeyCode::Tab => self.handle_tab::<T, I, C, K>()?,
             KeyCode::Backspace => self.handle_backspace()?,
             KeyCode::Left => {
-                let relative_cursor_x = cursor::position()?.0 as usize - PREFIX.len();
+                let relative_cursor_x = self.cursor_x as usize - PREFIX.len();
 
                 if relative_cursor_x != 0 {
                     execute!(self.stdout, cursor::MoveLeft(1))?;
+                    self.cursor_x = self.cursor_x - 1;
                 }
             }
             KeyCode::Right => {
-                let relative_cursor_x = cursor::position()?.0 as usize - PREFIX.len();
+                let relative_cursor_x = self.cursor_x as usize - PREFIX.len();
 
                 if relative_cursor_x < self.buffer.len() {
                     execute!(self.stdout, MoveRight(1))?;
+                    self.cursor_x = self.cursor_x + 1;
                 }
             }
             KeyCode::Up => todo!(),

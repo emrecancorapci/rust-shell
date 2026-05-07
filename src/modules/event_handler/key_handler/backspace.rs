@@ -1,5 +1,5 @@
 use crossterm::{
-    cursor::{self, MoveLeft, MoveToColumn},
+    cursor::MoveToColumn,
     execute,
     style::Print,
     terminal::{Clear, ClearType},
@@ -9,7 +9,8 @@ use crate::shell::{core::ShellAutoComplete, Shell};
 
 impl Shell {
     pub(crate) fn handle_backspace(&mut self) -> Result<(), std::io::Error> {
-        let relative_cursor_x = cursor::position()?.0 as usize - super::PREFIX.len();
+        let relative_cursor_x = self.cursor_x as usize - super::PREFIX.len();
+
         if relative_cursor_x == 0 {
             return Ok(());
         }
@@ -22,12 +23,10 @@ impl Shell {
             MoveToColumn(0),
             Print(super::PREFIX),
             Print(&self.buffer),
+            MoveToColumn((relative_cursor_x + 1) as u16)
         )?;
 
-        if relative_cursor_x <= self.buffer.len() {
-            execute!(self.stdout, MoveLeft(1))?;
-        }
-
+        self.cursor_x = self.cursor_x - 1;
         self.auto_complete.reset();
         Ok(())
     }

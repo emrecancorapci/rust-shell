@@ -16,6 +16,9 @@ pub struct Shell {
     pub(crate) stdout: Stdout,
     pub(crate) stderr: Stderr,
 
+    pub(crate) cursor_x: u16,
+    pub(crate) cursor_y: u16,
+
     // Auto Complete
     pub(crate) auto_complete: AutoComplete,
     // history: Vec<String>,
@@ -29,6 +32,8 @@ impl Shell {
             stderr: io::stderr(),
             // history: Vec::new(),
             auto_complete: AutoComplete::new(),
+            cursor_x: 0,
+            cursor_y: 0,
         }
     }
 
@@ -62,6 +67,7 @@ impl Shell {
         enable_raw_mode()?;
 
         execute!(self.stdout, Print("$ "),)?;
+        self.cursor_x = 2;
         Ok(())
     }
 

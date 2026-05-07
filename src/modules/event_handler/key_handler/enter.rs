@@ -38,6 +38,8 @@ impl Shell {
 
         execute!(self.stdout, Print("\r\n"), Print(super::PREFIX))?;
 
+        self.cursor_x = super::PREFIX.len() as u16;
+        self.cursor_y = self.cursor_y + 1;
         self.auto_complete.reset();
         self.buffer.clear();
         Ok(())

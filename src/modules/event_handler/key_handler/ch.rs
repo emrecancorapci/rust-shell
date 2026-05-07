@@ -1,5 +1,5 @@
 use crossterm::{
-    cursor::{self, MoveToColumn},
+    cursor::MoveToColumn,
     execute,
     style::Print,
     terminal::{Clear, ClearType},
@@ -9,7 +9,8 @@ use crate::shell::{core::ShellAutoComplete, Shell};
 
 impl Shell {
     pub(crate) fn handle_ch(&mut self, ch: char) -> Result<(), std::io::Error> {
-        let relative_cursor_x = cursor::position()?.0 as usize - super::PREFIX.len();
+        // TODO: Fix overflow when cursor is at the next line
+        let relative_cursor_x = self.cursor_x as usize - super::PREFIX.len();
 
         if relative_cursor_x < self.buffer.len() {
             self.buffer.insert(relative_cursor_x, ch);
@@ -27,6 +28,7 @@ impl Shell {
             execute!(self.stdout, Print(ch))?;
         }
 
+        self.cursor_x += 1;
         self.auto_complete.reset();
         Ok(())
     }
