@@ -55,14 +55,14 @@ impl Shell {
                     self.cursor_x = self.cursor_x + 1;
                 }
             }
-            KeyCode::Up => todo!(),
-            KeyCode::Down => todo!(),
+            KeyCode::Up => return Ok(()), // TODO: Implement history
+            KeyCode::Down => return Ok(()), // TODO: Implement history
+            KeyCode::Delete => return Ok(()), // TODO: Implement delete functionality
             KeyCode::Home => todo!(),
             KeyCode::End => todo!(),
             KeyCode::PageUp => todo!(),
             KeyCode::PageDown => todo!(),
             KeyCode::BackTab => todo!(),
-            KeyCode::Delete => todo!(),
             KeyCode::Insert => todo!(),
             KeyCode::F(_) => todo!(),
             KeyCode::Null => todo!(),
