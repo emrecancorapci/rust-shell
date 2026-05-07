@@ -15,3 +15,24 @@ pub trait ShellCommandProvider<T> {
 pub trait ShellCommand<T> {
     fn run(tokens: &[T]) -> Result<String, std::io::Error>;
 }
+
+pub trait ShellAutoComplete {
+    fn new() -> Self
+    where
+        Self: Sized;
+    fn reset(&mut self);
+    fn query_command<T, CommandProvider: ShellCommandProvider<T>>(
+        &mut self,
+        command: &str,
+    ) -> Result<QueryResult, std::io::Error>;
+}
+
+#[derive(PartialEq, Eq, Debug)]
+pub enum QueryResult {
+    NoMatch,
+    Bell,
+    ExactMatch(String),
+    SingleMatch(String),
+    CommonPrefix(String),
+    MultipleMatches(Vec<String>),
+}
