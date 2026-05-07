@@ -5,10 +5,16 @@ use crate::shell::{
     Shell,
 };
 
+mod clipboard_handler;
 mod key_handler;
 
 impl Shell {
-    pub(crate) fn handle_event<T, I: ShellInterpreter<T>, C: ShellCommandProvider<T>, K: ShellTokenizer<T>>(
+    pub(crate) fn handle_event<
+        T,
+        I: ShellInterpreter<T>,
+        C: ShellCommandProvider<T>,
+        K: ShellTokenizer<T>,
+    >(
         &mut self,
     ) -> Result<(), std::io::Error> {
         match event::read()? {
@@ -16,8 +22,8 @@ impl Shell {
             Event::FocusLost => todo!(),
             Event::Key(key_event) => self.handle_keys::<T, I, C, K>(key_event),
             Event::Mouse(_) => todo!(),
-            Event::Paste(_) => todo!(),
-            Event::Resize(_, _) => todo!(),
+            Event::Paste(clipboard) => self.handle_clipboard(clipboard),
+            Event::Resize(_, _) => Ok(()),
         }
     }
 }
