@@ -1,10 +1,9 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 use crate::shell::core::{QueryResult, ShellAutoComplete, ShellCommandProvider};
 
 pub struct AutoComplete {
     query: String,
-    is_tab_clicked: bool,
     tab_state: TabState,
 }
 
@@ -12,13 +11,11 @@ impl ShellAutoComplete for AutoComplete {
     fn new() -> Self {
         Self {
             query: String::new(),
-            is_tab_clicked: false,
             tab_state: TabState::Idle,
         }
     }
     fn reset(&mut self) {
         self.query.clear();
-        self.is_tab_clicked = false;
         self.tab_state = TabState::Idle;
     }
     fn query_command<U, CommandProvider: ShellCommandProvider<U>>(
@@ -30,32 +27,33 @@ impl ShellAutoComplete for AutoComplete {
         }
 
         let builtin_commands = CommandProvider::get_commands();
-        let mut result = HashSet::new();
-        let mut search_result = CommandProvider::search_command(&self.query)?;
+        let search_result = CommandProvider::search_command(&self.query)?;
+        let mut commands_btree = search_result.iter().cloned().collect::<BTreeSet<_>>();
 
-        result.extend(search_result.iter().map(|s| s.to_string()));
-        result.extend(
+        commands_btree.extend(
             builtin_commands
                 .iter()
                 .filter(|c| c.starts_with(&self.query))
                 .map(|s| s.to_string()),
         );
 
-        if search_result.len() == 0 {
+        let mut result = commands_btree.into_iter().collect::<Vec<_>>();
+
+        if result.is_empty() {
             return Ok(QueryResult::NoMatch);
         }
 
         if self.tab_state == TabState::Idle {
             self.tab_state = TabState::ClickedOnce;
 
-            if let Some(res) = search_result.iter().find(|s| s == &&self.query) {
+            if let Some(res) = result.iter().find(|s| s == &&self.query) {
                 return Ok(QueryResult::ExactMatch(res.clone()));
             }
 
-            return match search_result.len() {
-                1 => Ok(QueryResult::SingleMatch(search_result.pop().unwrap())),
+            return match result.len() {
+                1 => Ok(QueryResult::SingleMatch(result.pop().unwrap())),
                 _ => {
-                    let common_prefix = search_result.iter().fold(String::new(), |acc, s| {
+                    let common_prefix = result.iter().fold(String::new(), |acc, s| {
                         if acc.is_empty() {
                             s.clone()
                         } else {
@@ -70,18 +68,14 @@ impl ShellAutoComplete for AutoComplete {
                     }
                 }
             };
-        }
-
-        if self.tab_state == TabState::ClickedOnce {
+        } else {
             self.tab_state = TabState::ClickedMultipleTimes;
 
-            return match search_result.len() {
-                1 => Ok(QueryResult::SingleMatch(search_result.pop().unwrap())),
-                _ => Ok(QueryResult::MultipleMatches(search_result)),
+            return match result.len() {
+                1 => Ok(QueryResult::SingleMatch(result.pop().unwrap())),
+                _ => Ok(QueryResult::MultipleMatches(result)),
             };
         }
-
-        Ok(QueryResult::Bell)
     }
 }
 
