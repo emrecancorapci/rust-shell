@@ -1,8 +1,8 @@
 use std::{collections::HashSet, env};
 
 use crate::{
-    shell::core::{ShellCommand, ShellCommandProvider},
     modules::tokenizer::Token,
+    shell::core::{ShellCommand, ShellCommandProvider},
 };
 
 use builtin::{cd::Cd, echo::Echo, exit::Exit, pwd::Pwd, type_::Type};
@@ -35,7 +35,7 @@ impl ShellCommandProvider<Token> for CommandProvider {
     fn search_command(query: &str) -> Result<Vec<String>, std::io::Error> {
         let path_env = env::var("PATH").unwrap_or_default();
 
-        let mut found_binaries: Vec<String> = env::split_paths(&path_env)
+        return Ok(env::split_paths(&path_env)
             .filter_map(|dir| dir.read_dir().ok())
             .flatten()
             .filter_map(|entry| entry.ok())
@@ -43,10 +43,6 @@ impl ShellCommandProvider<Token> for CommandProvider {
             .filter(|name| name.starts_with(query))
             .collect::<HashSet<_>>()
             .into_iter()
-            .collect();
-
-        found_binaries.sort();
-
-        Ok(found_binaries)
+            .collect::<Vec<_>>());
     }
 }
