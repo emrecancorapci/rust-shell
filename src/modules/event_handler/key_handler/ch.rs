@@ -25,7 +25,7 @@ impl Shell {
             )?;
         } else {
             self.buffer.push(ch);
-            execute!(self.stdout, Print(ch))?;
+            execute!(self.stdout, Print(ch), MoveToColumn(self.cursor_x + 1))?;
         }
 
         self.cursor_x += 1;
