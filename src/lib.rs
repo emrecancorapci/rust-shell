@@ -12,5 +12,6 @@ pub mod modules {
     pub mod interpreter;
     pub mod provider;
     pub mod tokenizer;
+    pub mod auto_complete;
 }
 pub mod shell;
