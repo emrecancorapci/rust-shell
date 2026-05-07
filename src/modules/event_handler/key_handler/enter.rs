@@ -1,7 +1,7 @@
 use crossterm::{cursor::MoveToColumn, execute, style::Print};
 
 use crate::shell::{
-    core::{ShellCommandProvider, ShellInterpreter, ShellTokenizer},
+    core::{ShellAutoComplete, ShellCommandProvider, ShellInterpreter, ShellTokenizer},
     Shell,
 };
 use std::io::{Error, ErrorKind, Write};
@@ -38,8 +38,7 @@ impl Shell {
 
         execute!(self.stdout, Print("\r\n"), Print(super::PREFIX))?;
 
-        self.tab_index = 0;
-        self.tab_query = String::new();
+        self.auto_complete.reset();
         self.buffer.clear();
         Ok(())
     }

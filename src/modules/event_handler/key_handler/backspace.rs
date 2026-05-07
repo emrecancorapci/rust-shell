@@ -5,11 +5,10 @@ use crossterm::{
     terminal::{Clear, ClearType},
 };
 
-use crate::shell::Shell;
-use std::io::Error;
+use crate::shell::{core::ShellAutoComplete, Shell};
 
 impl Shell {
-    pub(crate) fn handle_backspace(&mut self) -> Result<(), Error> {
+    pub(crate) fn handle_backspace(&mut self) -> Result<(), std::io::Error> {
         let relative_cursor_x = cursor::position()?.0 as usize - super::PREFIX.len();
         if relative_cursor_x == 0 {
             return Ok(());
@@ -29,8 +28,7 @@ impl Shell {
             execute!(self.stdout, MoveLeft(1))?;
         }
 
-        self.tab_index = 0;
-        self.tab_query = String::new();
+        self.auto_complete.reset();
         Ok(())
     }
 }

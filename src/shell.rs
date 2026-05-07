@@ -7,6 +7,8 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 
+use crate::{modules::auto_complete::AutoComplete, shell::core::ShellAutoComplete};
+
 pub mod core;
 
 pub struct Shell {
@@ -15,8 +17,7 @@ pub struct Shell {
     pub(crate) stderr: Stderr,
 
     // Auto Complete
-    pub(crate) tab_query: String,
-    pub(crate) tab_index: u8,
+    pub(crate) auto_complete: AutoComplete,
     // history: Vec<String>,
 }
 
@@ -26,9 +27,8 @@ impl Shell {
             buffer: String::new(),
             stdout: io::stdout(),
             stderr: io::stderr(),
-            tab_index: 0,
-            tab_query: String::new(),
             // history: Vec::new(),
+            auto_complete: AutoComplete::new(),
         }
     }
 
@@ -37,6 +37,7 @@ impl Shell {
         I: ShellInterpreter<T>,
         C: ShellCommandProvider<T>,
         K: ShellTokenizer<T>,
+        A: ShellAutoComplete,
     >(
         &mut self,
     ) -> Result<(), Error> {
