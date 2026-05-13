@@ -33,6 +33,7 @@ impl Shell {
             }
             QueryResult::CommonPrefix(cmd) => {
                 self.buffer = cmd;
+                let new_cursor_pos_x = (&self.buffer.len() + super::PREFIX.len()) as u16;
 
                 execute!(
                     self.stdout,
@@ -40,11 +41,14 @@ impl Shell {
                     MoveToColumn(0),
                     Print(super::PREFIX),
                     Print(&self.buffer),
-                    MoveToColumn((&self.buffer.len() + 2) as u16)
+                    MoveToColumn(new_cursor_pos_x)
                 )?;
+
+                self.cursor_x = new_cursor_pos_x;
             }
             QueryResult::ExactMatch(cmd) | QueryResult::SingleMatch(cmd) => {
                 self.buffer = cmd + " ";
+                let new_cursor_pos_x = (&self.buffer.len() + super::PREFIX.len()) as u16;
 
                 execute!(
                     self.stdout,
@@ -52,8 +56,10 @@ impl Shell {
                     MoveToColumn(0),
                     Print(super::PREFIX),
                     Print(&self.buffer),
-                    MoveToColumn((&self.buffer.len() + 2) as u16)
+                    MoveToColumn(new_cursor_pos_x)
                 )?;
+
+                self.cursor_x = new_cursor_pos_x;
             }
             QueryResult::MultipleMatches(matches) => {
                 let results = matches.iter().fold(String::new(), |acc, s| acc + " " + s);
