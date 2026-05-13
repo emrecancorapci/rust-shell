@@ -27,6 +27,22 @@ pub trait ShellAutoComplete {
     ) -> Result<QueryResult, std::io::Error>;
 }
 
+pub trait ShellHistoryHandler {
+    fn new() -> Self
+    where
+        Self: Sized;
+    fn add_entry(&mut self, entry: &str);
+    fn remove_entry(&mut self, index: usize) -> Result<(), Error>;
+    fn get_previous(&mut self) -> Option<String>;
+    fn get_next(&mut self) -> Option<String>;
+    fn get_all(&self) -> Vec<String>;
+    fn get_nth(&self, n: usize) -> Option<String>;
+    fn clear(&mut self) -> Result<(), Error>;
+    fn load(&mut self) -> Result<(), Error>;
+    fn save(&self) -> Result<(), Error>;
+    fn set_default_path(&mut self, path: String) -> Result<(), Error>;
+}
+
 #[derive(PartialEq, Eq, Debug)]
 pub enum QueryResult {
     NoMatch,
