@@ -46,7 +46,7 @@ impl Shell {
 
             let tokens = tokens.unwrap();
 
-            match Interpreter::run::<CommandProvider>(&tokens, &self.services) {
+            match Interpreter::run::<CommandProvider>(&tokens, &mut self.services) {
                 Ok(bytes) if !bytes.is_empty() => {
                     let output = str::from_utf8(&bytes).unwrap();
                     output

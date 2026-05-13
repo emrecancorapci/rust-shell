@@ -17,7 +17,7 @@ pub const SUPPORTED_COMMANDS: [&str; 6] = ["echo", "type", "exit", "pwd", "cd", 
 pub struct CommandProvider {}
 
 impl ShellCommandProvider<Token, ServiceContainer> for CommandProvider {
-    fn run(cmd: &str, tokens: &[Token], services: &ServiceContainer) -> Result<String, Error> {
+    fn run(cmd: &str, tokens: &[Token], services: &mut ServiceContainer) -> Result<String, Error> {
         match cmd {
             "echo" => Echo::run(tokens, services),
             "history" => History::run(tokens, services),

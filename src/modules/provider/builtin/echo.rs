@@ -7,7 +7,7 @@ use crate::{
 pub struct Echo {}
 
 impl ShellCommand<Token, ServiceContainer> for Echo {
-    fn run(tokens: &[Token], _services: &ServiceContainer) -> Result<String, std::io::Error> {
+    fn run(tokens: &[Token], _services: &mut ServiceContainer) -> Result<String, std::io::Error> {
         if tokens.len() < 3 {
             return Err(Error::new(
                 ErrorKind::InvalidInput,

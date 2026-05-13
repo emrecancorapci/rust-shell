@@ -1,7 +1,7 @@
 use std::io::Error;
 
 pub trait ShellInterpreter<T, C> {
-    fn run<R: ShellCommandProvider<T, C>>(tokens: &[T], services: &C) -> Result<Vec<u8>, Error>;
+    fn run<R: ShellCommandProvider<T, C>>(tokens: &[T], services: &mut C) -> Result<Vec<u8>, Error>;
 }
 
 pub trait ShellTokenizer<T> {
@@ -13,13 +13,13 @@ pub trait ShellTokenSerializer {
 }
 
 pub trait ShellCommandProvider<T, C> {
-    fn run(cmd: &str, tokens: &[T], services: &C) -> Result<String, Error>;
+    fn run(cmd: &str, tokens: &[T], services: &mut C) -> Result<String, Error>;
     fn get_commands() -> Vec<&'static str>;
     fn search_command(query: &str) -> Result<Vec<String>, Error>;
 }
 
 pub trait ShellCommand<T, C> {
-    fn run(tokens: &[T], services: &C) -> Result<String, Error>;
+    fn run(tokens: &[T], services: &mut C) -> Result<String, Error>;
 }
 
 pub trait ShellAutoComplete {
@@ -45,6 +45,7 @@ pub trait ShellHistoryHandler {
     fn get_nth(&self, n: usize) -> Option<String>;
     fn clear(&mut self) -> Result<(), Error>;
     fn load(&mut self) -> Result<(), Error>;
+    fn load_from_path(&mut self, file_path: std::path::PathBuf) -> Result<(), Error>;
     fn save(&self) -> Result<(), Error>;
     fn set_default_path(&mut self, path: String) -> Result<(), Error>;
 }

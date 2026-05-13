@@ -7,7 +7,7 @@ use crate::{modules::{service_container::ServiceContainer, tokenizer::Token}, sh
 pub struct Cd {}
 
 impl ShellCommand<Token, ServiceContainer> for Cd {
-    fn run(tokens: &[Token], _services: &ServiceContainer) -> Result<String, Error> {
+    fn run(tokens: &[Token], _services: &mut ServiceContainer) -> Result<String, Error> {
         if tokens.len() < 3 {
             return Err(Error::new(ErrorKind::InvalidInput, "cd: missing argument"));
         }

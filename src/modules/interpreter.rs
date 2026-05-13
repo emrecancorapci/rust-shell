@@ -15,7 +15,7 @@ pub struct Interpreter {}
 impl ShellInterpreter<Token, ServiceContainer> for Interpreter {
     fn run<CommandProvider: ShellCommandProvider<Token, ServiceContainer>>(
         tokens: &[Token],
-        services: &ServiceContainer,
+        services: &mut ServiceContainer,
     ) -> Result<Vec<u8>, Error> {
         match tokens.iter().any(|t| t.is_redirection_token()) {
             true => Self::handle_redirected_input::<CommandProvider>(tokens, services),
@@ -27,7 +27,7 @@ impl ShellInterpreter<Token, ServiceContainer> for Interpreter {
 impl Interpreter {
     fn handle_direct_input<CommandProvider: ShellCommandProvider<Token, ServiceContainer>>(
         tokens: &[Token],
-        services: &ServiceContainer,
+        services: &mut ServiceContainer,
     ) -> Result<Vec<u8>, Error> {
         let cmd_token = tokens.iter().find(|token| match token {
             Token::Value(_) | Token::String(_, _) => true,
@@ -105,7 +105,7 @@ impl Interpreter {
 
     fn handle_redirected_input<CommandProvider: ShellCommandProvider<Token, ServiceContainer>>(
         tokens: &[Token],
-        services: &ServiceContainer,
+        services: &mut ServiceContainer,
     ) -> Result<Vec<u8>, Error> {
         let redirection_index = tokens
             .iter()
