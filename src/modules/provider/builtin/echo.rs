@@ -1,10 +1,13 @@
 use std::io::{Error, ErrorKind};
 
-use crate::{modules::tokenizer::Token, shell::core::ShellCommand};
+use crate::{
+    modules::{service_container::ServiceContainer, tokenizer::Token},
+    shell::core::ShellCommand,
+};
 pub struct Echo {}
 
-impl ShellCommand<Token> for Echo {
-    fn run(tokens: &[Token]) -> Result<String, std::io::Error> {
+impl ShellCommand<Token, ServiceContainer> for Echo {
+    fn run(tokens: &[Token], _services: &ServiceContainer) -> Result<String, std::io::Error> {
         if tokens.len() < 3 {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
@@ -22,8 +25,9 @@ impl ShellCommand<Token> for Echo {
                         string.push(' ');
                     }
                 }
-                Token::Value(cmd) => string.push_str(cmd.as_str()),
-                Token::String(str, _) => string.push_str(str.as_str()),
+                Token::Value(str) | Token::String(str, _) if !str.is_empty() => {
+                    string.push_str(str)
+                }
                 Token::Appender(_) => return Ok(string),
                 Token::Redirector(_) => return Ok(string),
                 _ => {}

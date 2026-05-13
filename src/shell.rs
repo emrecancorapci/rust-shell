@@ -1,4 +1,7 @@
-use std::io::{self, Error, ErrorKind, Stderr, Stdout, Write};
+use std::{
+    fmt::Debug,
+    io::{self, Error, ErrorKind, Stderr, Stdout, Write},
+};
 
 use core::{ShellCommandProvider, ShellInterpreter, ShellTokenizer};
 use crossterm::{
@@ -7,7 +10,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 
-use crate::{modules::auto_complete::AutoComplete, shell::core::ShellAutoComplete};
+use crate::modules::service_container::ServiceContainer;
 
 pub mod core;
 
@@ -19,9 +22,7 @@ pub struct Shell {
     pub(crate) cursor_x: u16,
     pub(crate) cursor_y: u16,
 
-    // Auto Complete
-    pub(crate) auto_complete: AutoComplete,
-    // history: Vec<String>,
+    pub(crate) services: ServiceContainer,
 }
 
 impl Shell {
@@ -30,19 +31,17 @@ impl Shell {
             buffer: String::new(),
             stdout: io::stdout(),
             stderr: io::stderr(),
-            // history: Vec::new(),
-            auto_complete: AutoComplete::new(),
             cursor_x: 0,
             cursor_y: 0,
+            services: ServiceContainer::new(),
         }
     }
 
     pub async fn run<
-        T,
-        I: ShellInterpreter<T>,
-        C: ShellCommandProvider<T>,
-        K: ShellTokenizer<T>,
-        A: ShellAutoComplete,
+        Token: Debug,
+        Interpreter: ShellInterpreter<Token, ServiceContainer>,
+        CommandProvider: ShellCommandProvider<Token, ServiceContainer>,
+        Tokenizer: ShellTokenizer<Token>,
     >(
         &mut self,
     ) -> Result<(), Error> {
@@ -51,7 +50,7 @@ impl Shell {
         loop {
             self.stdout.flush()?;
 
-            let result = self.handle_event::<T, I, C, K>();
+            let result = self.handle_event::<Token, Interpreter, CommandProvider, Tokenizer>();
 
             if result.is_err() && result.unwrap_err().kind() == ErrorKind::Interrupted {
                 break;
@@ -65,6 +64,7 @@ impl Shell {
 
     fn init(&mut self) -> Result<(), Error> {
         enable_raw_mode()?;
+        self.services.init()?;
 
         execute!(self.stdout, Print("$ "),)?;
         self.cursor_x = 2;
@@ -73,6 +73,7 @@ impl Shell {
 
     fn uninit(&mut self) -> Result<(), Error> {
         disable_raw_mode()?;
+        self.services.cleanup()?;
 
         execute!(self.stdout)?;
         Ok(())

@@ -27,7 +27,7 @@ impl Shell {
         )?;
 
         self.cursor_x = self.cursor_x - 1;
-        self.auto_complete.reset();
+        self.services.auto_complete.reset();
         Ok(())
     }
 }

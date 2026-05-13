@@ -3,11 +3,11 @@ use std::{
     io::{Error, ErrorKind},
 };
 
-use crate::{modules::tokenizer::Token, shell::core::ShellCommand};
+use crate::{modules::{service_container::ServiceContainer, tokenizer::Token}, shell::core::ShellCommand};
 pub struct Cd {}
 
-impl ShellCommand<Token> for Cd {
-    fn run(tokens: &[Token]) -> Result<String, Error> {
+impl ShellCommand<Token, ServiceContainer> for Cd {
+    fn run(tokens: &[Token], _services: &ServiceContainer) -> Result<String, Error> {
         if tokens.len() < 3 {
             return Err(Error::new(ErrorKind::InvalidInput, "cd: missing argument"));
         }

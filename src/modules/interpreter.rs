@@ -5,25 +5,29 @@ use std::{
 };
 
 use crate::{
-    modules::tokenizer::Token,
+    modules::{service_container::ServiceContainer, tokenizer::Token},
     shell::core::{ShellCommandProvider, ShellInterpreter},
     util::{error::AsBytes, output::SplitOutput, path::ExecutionPath},
 };
 
 pub struct Interpreter {}
 
-impl ShellInterpreter<Token> for Interpreter {
-    fn run<CP: ShellCommandProvider<Token>>(tokens: &[Token]) -> Result<Vec<u8>, Error> {
+impl ShellInterpreter<Token, ServiceContainer> for Interpreter {
+    fn run<CommandProvider: ShellCommandProvider<Token, ServiceContainer>>(
+        tokens: &[Token],
+        services: &ServiceContainer,
+    ) -> Result<Vec<u8>, Error> {
         match tokens.iter().any(|t| t.is_redirection_token()) {
-            true => Self::handle_redirected_input::<CP>(tokens),
-            false => Self::handle_direct_input::<CP>(tokens),
+            true => Self::handle_redirected_input::<CommandProvider>(tokens, services),
+            false => Self::handle_direct_input::<CommandProvider>(tokens, services),
         }
     }
 }
 
 impl Interpreter {
-    fn handle_direct_input<CP: ShellCommandProvider<Token>>(
+    fn handle_direct_input<CommandProvider: ShellCommandProvider<Token, ServiceContainer>>(
         tokens: &[Token],
+        services: &ServiceContainer,
     ) -> Result<Vec<u8>, Error> {
         let cmd_token = tokens.iter().find(|token| match token {
             Token::Value(_) | Token::String(_, _) => true,
@@ -39,35 +43,35 @@ impl Interpreter {
 
         match cmd_token.unwrap() {
             Token::Value(cmd) | Token::String(cmd, _) => {
-                match CP::run(cmd, tokens) {
+                match CommandProvider::run(cmd, tokens, services) {
                     Ok(response) => return Ok(response.as_bytes().to_vec()),
                     Err(err)
                         if err.kind() == ErrorKind::NotFound && cmd.get_exec_path().is_some() =>
                     {
-                let output = Self::execute_external(tokens, cmd)?;
+                        let output = Self::execute_external(tokens, cmd)?;
 
-                if output.status.success() {
-                    let mut output_array = output.stdout.to_vec();
+                        if output.status.success() {
+                            let mut output_array = output.stdout.to_vec();
 
-                    if output_array.last() == Some(&10) {
-                        output_array.pop();
+                            if output_array.last() == Some(&10) {
+                                output_array.pop();
+                            }
+
+                            return Ok(output_array);
+                        }
+
+                        let mut error_array = output.stderr.to_vec();
+
+                        if error_array.last() == Some(&10) {
+                            error_array.pop();
+                        }
+
+                        return Err(Error::new(
+                            ErrorKind::InvalidInput,
+                            String::from_utf8(error_array).unwrap(),
+                        ));
                     }
-
-                    return Ok(output_array);
-                }
-
-                let mut error_array = output.stderr.to_vec();
-
-                if error_array.last() == Some(&10) {
-                    error_array.pop();
-                }
-
-                return Err(Error::new(
-                    ErrorKind::InvalidInput,
-                    String::from_utf8(error_array).unwrap(),
-                ));
-            }
-                Err(err) => return Err(err),
+                    Err(err) => return Err(err),
                 }
             }
             _ => return Err(Error::new(ErrorKind::InvalidInput, "error: invalid input")),
@@ -99,8 +103,9 @@ impl Interpreter {
         std::process::Command::new(cmd).args(args).output()
     }
 
-    fn handle_redirected_input<CP: ShellCommandProvider<Token>>(
+    fn handle_redirected_input<CommandProvider: ShellCommandProvider<Token, ServiceContainer>>(
         tokens: &[Token],
+        services: &ServiceContainer,
     ) -> Result<Vec<u8>, Error> {
         let redirection_index = tokens
             .iter()
@@ -116,7 +121,7 @@ impl Interpreter {
                 output.split_output()
             }
             Some(Token::Value(cmd) | Token::String(cmd, _)) => {
-                match CP::run(cmd, &tokens.to_vec()) {
+                match CommandProvider::run(cmd, &tokens.to_vec(), services) {
                     Ok(response) => (Some(response.as_bytes().to_vec()), None),
                     Err(err) => (None, Some(err)),
                 }

@@ -15,15 +15,17 @@ use crate::shell::{
 impl Shell {
     pub(crate) fn handle_tab<
         T,
-        Interpreter: ShellInterpreter<T>,
-        CommandProvider: ShellCommandProvider<T>,
+        C,
+        Interpreter: ShellInterpreter<T, C>,
+        CommandProvider: ShellCommandProvider<T, C>,
         Tokenizer: ShellTokenizer<T>,
     >(
         &mut self,
     ) -> Result<(), std::io::Error> {
         let result = self
+            .services
             .auto_complete
-            .query_command::<T, CommandProvider>(&self.buffer)?;
+            .query_command::<T, C, CommandProvider>(&self.buffer)?;
 
         match result {
             QueryResult::NoMatch | QueryResult::Bell => {

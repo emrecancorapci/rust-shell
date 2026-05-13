@@ -1,28 +1,31 @@
-use std::{collections::HashSet, env};
+use std::{
+    env,
+    io::{Error, ErrorKind},
+};
 
 use crate::{
-    modules::tokenizer::Token,
+    modules::{service_container::ServiceContainer, tokenizer::Token},
     shell::core::{ShellCommand, ShellCommandProvider},
 };
 
-use builtin::{cd::Cd, echo::Echo, exit::Exit, pwd::Pwd, type_::Type};
+use builtin::{cd::Cd, echo::Echo, exit::Exit, history::History, pwd::Pwd, type_::Type};
 
 pub mod builtin;
 
-pub const SUPPORTED_COMMANDS: [&str; 5] = ["echo", "type", "exit", "pwd", "cd"];
+pub const SUPPORTED_COMMANDS: [&str; 6] = ["echo", "type", "exit", "pwd", "cd", "history"];
 
 pub struct CommandProvider {}
 
-impl ShellCommandProvider<Token> for CommandProvider {
-    fn run(cmd: &str, tokens: &[Token]) -> Result<String, std::io::Error> {
+impl ShellCommandProvider<Token, ServiceContainer> for CommandProvider {
+    fn run(cmd: &str, tokens: &[Token], services: &ServiceContainer) -> Result<String, Error> {
         match cmd {
-            "echo" => Echo::run(tokens),
-            "type" => Type::run(tokens),
-            "exit" => Exit::run(tokens),
-            "pwd" => Pwd::run(tokens),
-            "cd" => Cd::run(tokens),
-            _ => Err(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
+            "echo" => Echo::run(tokens, services),
+            "type" => Type::run(tokens, services),
+            "exit" => Exit::run(tokens, services),
+            "pwd" => Pwd::run(tokens, services),
+            "cd" => Cd::run(tokens, services),
+            _ => Err(Error::new(
+                ErrorKind::NotFound,
                 format!("{}: command not found", cmd),
             )),
         }
@@ -32,7 +35,7 @@ impl ShellCommandProvider<Token> for CommandProvider {
         return SUPPORTED_COMMANDS.to_vec();
     }
 
-    fn search_command(query: &str) -> Result<Vec<String>, std::io::Error> {
+    fn search_command(query: &str) -> Result<Vec<String>, Error> {
         let path_env = env::var("PATH").unwrap_or_default();
 
         return Ok(env::split_paths(&path_env)
@@ -41,8 +44,6 @@ impl ShellCommandProvider<Token> for CommandProvider {
             .filter_map(|entry| entry.ok())
             .filter_map(|entry| entry.file_name().to_str().map(|s| s.to_string()))
             .filter(|name| name.starts_with(query))
-            .collect::<HashSet<_>>()
-            .into_iter()
             .collect::<Vec<_>>());
     }
 }

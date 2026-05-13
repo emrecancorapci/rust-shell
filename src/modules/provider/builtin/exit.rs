@@ -1,11 +1,14 @@
 use std::io::{Error, ErrorKind};
 
-use crate::{modules::tokenizer::Token, shell::core::ShellCommand};
+use crate::{
+    modules::{service_container::ServiceContainer, tokenizer::Token},
+    shell::core::ShellCommand,
+};
 
 pub struct Exit {}
 
-impl ShellCommand<Token> for Exit {
-    fn run(tokens: &[Token]) -> Result<String, Error> {
+impl ShellCommand<Token, ServiceContainer> for Exit {
+    fn run(tokens: &[Token], _services: &ServiceContainer) -> Result<String, Error> {
         if tokens.len() > 2 && tokens.get(2) == Some(&Token::Value("0".to_string())) {
             return Err(Error::new(ErrorKind::Interrupted, ""));
         } else if tokens.len() == 1 {

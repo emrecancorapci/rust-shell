@@ -18,7 +18,7 @@ impl ShellAutoComplete for AutoComplete {
         self.query.clear();
         self.tab_state = TabState::Idle;
     }
-    fn query_command<U, CommandProvider: ShellCommandProvider<U>>(
+    fn query_command<T, C, CommandProvider: ShellCommandProvider<T, C>>(
         &mut self,
         command: &str,
     ) -> Result<QueryResult, std::io::Error> {

@@ -10,9 +10,12 @@ use crossterm::{
     style::Print,
 };
 
-use crate::shell::{
-    core::{ShellCommandProvider, ShellInterpreter, ShellTokenizer},
-    Shell,
+use crate::{
+    modules::service_container::ServiceContainer,
+    shell::{
+        core::{ShellCommandProvider, ShellInterpreter, ShellTokenizer},
+        Shell,
+    },
 };
 const PREFIX: &str = "$ ";
 
@@ -24,8 +27,8 @@ mod tab;
 impl Shell {
     pub(crate) fn handle_event<
         Token: Debug,
-        Interpreter: ShellInterpreter<Token>,
-        CommandProvider: ShellCommandProvider<Token>,
+        Interpreter: ShellInterpreter<Token, ServiceContainer>,
+        CommandProvider: ShellCommandProvider<Token, ServiceContainer>,
         Tokenizer: ShellTokenizer<Token>,
     >(
         &mut self,
@@ -33,9 +36,8 @@ impl Shell {
         match event::read()? {
             Event::FocusGained => todo!(),
             Event::FocusLost => todo!(),
-            Event::Key(key_event) => {
-                self.handle_keys::<Token, Interpreter, CommandProvider, Tokenizer>(key_event)
-            }
+            Event::Key(key_event) => self
+                .handle_keys::<Token, Interpreter, CommandProvider, Tokenizer>(key_event),
             Event::Mouse(_) => todo!(),
             Event::Paste(clipboard) => self.handle_clipboard(clipboard),
             Event::Resize(_, _) => Ok(()),
@@ -44,8 +46,8 @@ impl Shell {
 
     pub fn handle_keys<
         Token: Debug,
-        Interpreter: ShellInterpreter<Token>,
-        CommandProvider: ShellCommandProvider<Token>,
+        Interpreter: ShellInterpreter<Token, ServiceContainer>,
+        CommandProvider: ShellCommandProvider<Token, ServiceContainer>,
         Tokenizer: ShellTokenizer<Token>,
     >(
         &mut self,
@@ -62,12 +64,8 @@ impl Shell {
         if !key_event.modifiers.contains(KeyModifiers::CONTROL) {
             match key_event.code {
                 KeyCode::Char(ch) => self.handle_ch(ch)?,
-                KeyCode::Enter => {
-                    self.handle_enter::<Token, Interpreter, CommandProvider, Tokenizer>()?
-                }
-                KeyCode::Tab => self
-                    .handle_tab::<Token, Interpreter, CommandProvider, Tokenizer>(
-                    )?,
+                KeyCode::Enter => self.handle_enter::<Token, Interpreter, CommandProvider, Tokenizer>()?,
+                KeyCode::Tab => self.handle_tab::<Token, ServiceContainer, Interpreter, CommandProvider, Tokenizer>()?,
                 KeyCode::Backspace => self.handle_backspace()?,
                 KeyCode::Left => {
                     let relative_cursor_x = self.cursor_x as usize - PREFIX.len();

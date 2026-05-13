@@ -13,5 +13,7 @@ pub mod modules {
     pub mod provider;
     pub mod tokenizer;
     pub mod auto_complete;
+    pub mod history_handler;
+    pub mod service_container;
 }
 pub mod shell;

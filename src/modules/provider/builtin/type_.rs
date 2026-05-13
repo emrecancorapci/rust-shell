@@ -1,15 +1,17 @@
 use std::io::{Error, ErrorKind};
 
 use crate::{
-    modules::{provider::SUPPORTED_COMMANDS, tokenizer::Token},
+    modules::{
+        provider::SUPPORTED_COMMANDS, service_container::ServiceContainer, tokenizer::Token,
+    },
     shell::core::ShellCommand,
     util::path::ExecutionPath,
 };
 
 pub struct Type {}
 
-impl ShellCommand<Token> for Type {
-    fn run(tokens: &[Token]) -> Result<String, Error> {
+impl ShellCommand<Token, ServiceContainer> for Type {
+    fn run(tokens: &[Token], _services: &ServiceContainer) -> Result<String, Error> {
         if tokens.len() < 3 {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
@@ -33,7 +35,9 @@ impl ShellCommand<Token> for Type {
                 ))
             }
             Token::Value(input) | Token::String(input, _) => match input.get_exec_path() {
-                Some(path) => return Ok(format!("{} is {}", input, path.to_str().unwrap())),
+                Some(path) => {
+                    return Ok(format!("{} is {}", input, path.to_str().unwrap()));
+                }
                 None => {
                     return Err(Error::new(
                         ErrorKind::InvalidInput,
