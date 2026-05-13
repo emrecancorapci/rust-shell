@@ -75,13 +75,28 @@ impl Interpreter {
     }
 
     fn execute_external(tokens: &[Token], cmd: &String) -> Result<Output, Error> {
-        let input_array = tokens
+        let args: Vec<String> = tokens
             .iter()
             .skip(2)
-            .filter(|i| !matches!(i, Token::Space))
-            .map(|i| i.serialize());
+            .fold(Vec::<Vec<&Token>>::new(), |mut groups, token| {
+                if matches!(token, Token::Space) {
+                    // A space starts a new group
+                    groups.push(Vec::new());
+                } else {
+                    // Append to the last group, or create first group
+                    if groups.is_empty() {
+                        groups.push(Vec::new());
+                    }
+                    groups.last_mut().unwrap().push(token);
+                }
+                groups
+            })
+            .into_iter()
+            .filter(|g| !g.is_empty())
+            .map(|g| g.iter().map(|t| t.serialize()).collect::<String>())
+            .collect();
 
-        std::process::Command::new(cmd).args(input_array).output()
+        std::process::Command::new(cmd).args(args).output()
     }
 
     fn handle_redirected_input<CP: ShellCommandProvider<Token>>(
@@ -137,14 +152,13 @@ impl Interpreter {
                 }
             }
             Token::Redirector('2') => {
-                if error.is_none() {
-                    return match output {
-                        Some(output) => Ok(output),
-                        None => Ok(vec![]),
-                    };
-                }
-
-                fs::write(path, error.unwrap().to_string().as_bytes())?;
+                fs::write(
+                    path,
+                    &error
+                        .unwrap_or_else(|| Error::new(ErrorKind::Other, ""))
+                        .to_string()
+                        .as_bytes(),
+                )?;
 
                 match output {
                     Some(output) => Ok(output),
@@ -153,6 +167,8 @@ impl Interpreter {
             }
             Token::Appender('1') => {
                 if output.is_none() {
+                    Self::append_to_file(&path, b"")?;
+
                     return match error {
                         Some(err) => Err(err),
                         None => Ok(vec![]),
@@ -191,7 +207,15 @@ impl Interpreter {
     }
 
     fn append_to_file(path: &str, content: &[u8]) -> Result<(), Error> {
-        let mut contents = fs::read(&path)?;
+        let contents = fs::read(&path);
+
+        if contents.is_err() {
+            fs::write(path, &content)?;
+
+            return Ok(());
+        }
+
+        let mut contents = contents.unwrap();
 
         if !contents.is_empty() {
             contents.extend_from_slice(&[10]);
