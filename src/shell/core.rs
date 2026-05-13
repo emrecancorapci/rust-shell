@@ -1,19 +1,25 @@
-pub trait ShellInterpreter<T> {
-    fn run<R: ShellCommandProvider<T>>(tokens: &[T]) -> Result<Vec<u8>, std::io::Error>;
+use std::io::Error;
+
+pub trait ShellInterpreter<T, C> {
+    fn run<R: ShellCommandProvider<T, C>>(tokens: &[T], services: &C) -> Result<Vec<u8>, Error>;
 }
 
 pub trait ShellTokenizer<T> {
-    fn tokenize(input: &str) -> Result<Vec<T>, std::io::Error>;
+    fn tokenize(input: &str) -> Result<Vec<T>, Error>;
 }
 
-pub trait ShellCommandProvider<T> {
-    fn run(cmd: &str, tokens: &[T]) -> Result<String, std::io::Error>;
+pub trait ShellTokenSerializer {
+    fn serialize(self: &Self, skip: usize) -> String;
+}
+
+pub trait ShellCommandProvider<T, C> {
+    fn run(cmd: &str, tokens: &[T], services: &C) -> Result<String, Error>;
     fn get_commands() -> Vec<&'static str>;
-    fn search_command(query: &str) -> Result<Vec<String>, std::io::Error>;
+    fn search_command(query: &str) -> Result<Vec<String>, Error>;
 }
 
-pub trait ShellCommand<T> {
-    fn run(tokens: &[T]) -> Result<String, std::io::Error>;
+pub trait ShellCommand<T, C> {
+    fn run(tokens: &[T], services: &C) -> Result<String, Error>;
 }
 
 pub trait ShellAutoComplete {
@@ -21,10 +27,10 @@ pub trait ShellAutoComplete {
     where
         Self: Sized;
     fn reset(&mut self);
-    fn query_command<T, CommandProvider: ShellCommandProvider<T>>(
+    fn query_command<T, C, CommandProvider: ShellCommandProvider<T, C>>(
         &mut self,
         command: &str,
-    ) -> Result<QueryResult, std::io::Error>;
+    ) -> Result<QueryResult, Error>;
 }
 
 pub trait ShellHistoryHandler {
