@@ -5,12 +5,13 @@ use std::{
 };
 
 pub use token::Token;
+pub mod serializer;
 
 use crate::shell::core::ShellTokenizer;
 
 mod token;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 enum ParseMode {
     None,
     Value,
@@ -78,11 +79,13 @@ impl ShellTokenizer<Token> for Tokenizer {
                         return Err(Error::new(
                             ErrorKind::InvalidInput,
                             format!("Invalid character at {}", i),
-                        ))
+                        ));
                     }
                 },
                 ParseMode::Value => match ch {
-                    'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' | '.' | '/' => buffer.push(ch),
+                    'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' | '.' | '/' | ':' => {
+                        buffer.push(ch)
+                    }
                     '\\' => {
                         let ch = iter.peek();
 
@@ -103,11 +106,23 @@ impl ShellTokenizer<Token> for Tokenizer {
                         mode = ParseMode::None;
                         sub_mode = ParseMode::None;
                     }
+                    '"' => {
+                        tokens.push(generate_token(mode, &buffer));
+                        buffer = String::new();
+                        mode = ParseMode::DoubleQuote;
+                        sub_mode = ParseMode::None;
+                    }
+                    '\'' => {
+                        tokens.push(generate_token(mode, &buffer));
+                        buffer = String::new();
+                        mode = ParseMode::SingleQuote;
+                        sub_mode = ParseMode::None;
+                    }
                     _ => {
                         return Err(Error::new(
                             ErrorKind::InvalidInput,
                             format!("Invalid character at {}", i),
-                        ))
+                        ));
                     }
                 },
                 ParseMode::SingleQuote => match ch {
@@ -173,7 +188,7 @@ impl ShellTokenizer<Token> for Tokenizer {
                         return Err(Error::new(
                             ErrorKind::InvalidInput,
                             format!("Invalid character at {}", i),
-                        ))
+                        ));
                     }
                 },
             }
