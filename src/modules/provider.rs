@@ -20,6 +20,7 @@ impl ShellCommandProvider<Token, ServiceContainer> for CommandProvider {
     fn run(cmd: &str, tokens: &[Token], services: &ServiceContainer) -> Result<String, Error> {
         match cmd {
             "echo" => Echo::run(tokens, services),
+            "history" => History::run(tokens, services),
             "type" => Type::run(tokens, services),
             "exit" => Exit::run(tokens, services),
             "pwd" => Pwd::run(tokens, services),
