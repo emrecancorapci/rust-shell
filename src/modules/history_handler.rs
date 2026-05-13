@@ -1,7 +1,7 @@
 use std::{
     fs::{self, File},
     io::{Error, ErrorKind, Read, Write},
-    path::Path,
+    path::{Path, PathBuf},
     time::{Duration, SystemTime},
 };
 
@@ -10,7 +10,7 @@ use crate::shell::core::ShellHistoryHandler;
 pub struct HistoryHandler {
     current_index: usize,
     history: Vec<HistoryEntry>,
-    path: std::path::PathBuf,
+    path: PathBuf,
 }
 
 impl ShellHistoryHandler for HistoryHandler {
@@ -89,29 +89,35 @@ impl ShellHistoryHandler for HistoryHandler {
 
         let file_path = Path::new(&env_dir).join(".rshell_history");
 
-        let result = HistoryHandler::create_history_from_path(&file_path);
+        let mut result = HistoryHandler::create_history_from_path(&file_path);
 
         if result.is_err() {
             let mut file: File = File::create(&file_path).unwrap_or_else(|err| {
                 panic!("Failed to create history file: {}", err);
             });
 
-            let result = HistoryHandler::create_history_from_file(&mut file);
+            result = HistoryHandler::create_history_from_file(&mut file);
 
             if result.is_err() {
                 self.current_index = 0;
                 self.history = Vec::new();
                 self.path = "".into();
-            } else {
-                self.history = result.unwrap();
-                self.current_index = self.history.len();
-                self.path = file_path;
+
+                return Ok(());
             }
-        } else {
-            self.history = result.unwrap();
-            self.current_index = self.history.len();
-            self.path = file_path;
         }
+
+        self.history = result.unwrap();
+        self.current_index = self.history.len();
+        self.path = file_path;
+
+        return Ok(());
+    }
+
+    fn load_from_path(&mut self, file_path: PathBuf) -> Result<(), Error> {
+        self.history = HistoryHandler::create_history_from_path(&file_path)?;
+        self.current_index = self.history.len();
+        self.path = file_path.into();
 
         return Ok(());
     }
