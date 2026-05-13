@@ -35,10 +35,12 @@ impl Shell {
                 self.stderr
                     .write(tokens.err().unwrap().to_string().as_bytes())?;
                 execute!(self.stdout, Print("\r\n"), Print(super::PREFIX))?;
+
                 self.cursor_x = super::PREFIX.len() as u16;
                 self.cursor_y = self.cursor_y + 1;
                 self.services.auto_complete.reset();
                 self.buffer.clear();
+
                 return Ok(());
             }
 

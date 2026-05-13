@@ -1,0 +1,1 @@
+Shell::run => Shell::handle_event => Shell::handle_keys => Shell::handle_enter => Tokenizer::tokenize => Interpreter::run => Interpreter::handle_redirected_input => CommandProvider::run => Echo::run => Interpreter::execute_redirected
