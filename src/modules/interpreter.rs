@@ -26,7 +26,7 @@ impl Interpreter {
         tokens: &[Token],
     ) -> Result<Vec<u8>, Error> {
         let cmd_token = tokens.iter().find(|token| match token {
-            Token::Value(_) => true,
+            Token::Value(_) | Token::String(_, _) => true,
             _ => false,
         });
 
@@ -38,7 +38,12 @@ impl Interpreter {
         }
 
         match cmd_token.unwrap() {
-            Token::Value(cmd) | Token::String(cmd, _) if cmd.get_exec_path().is_some() => {
+            Token::Value(cmd) | Token::String(cmd, _) => {
+                match CP::run(cmd, tokens) {
+                    Ok(response) => return Ok(response.as_bytes().to_vec()),
+                    Err(err)
+                        if err.kind() == ErrorKind::NotFound && cmd.get_exec_path().is_some() =>
+                    {
                 let output = Self::execute_external(tokens, cmd)?;
 
                 if output.status.success() {
@@ -62,10 +67,9 @@ impl Interpreter {
                     String::from_utf8(error_array).unwrap(),
                 ));
             }
-            Token::Value(cmd) | Token::String(cmd, _) => match CP::run(cmd, tokens) {
-                Ok(response) => return Ok(response.as_bytes().to_vec()),
                 Err(err) => return Err(err),
-            },
+                }
+            }
             _ => return Err(Error::new(ErrorKind::InvalidInput, "error: invalid input")),
         }
     }
