@@ -1,6 +1,5 @@
 use shell_starter_rust::{
     modules::{
-        auto_complete::AutoComplete,
         interpreter::Interpreter,
         provider::CommandProvider,
         tokenizer::{Token, Tokenizer},
@@ -12,7 +11,11 @@ use shell_starter_rust::{
 async fn main() {
     let mut shell = Shell::new();
 
-    let _ = shell
-        .run::<Token, Interpreter, CommandProvider, Tokenizer, AutoComplete>()
+    let result = shell
+        .run::<Token, Interpreter, CommandProvider, Tokenizer>()
         .await;
+
+    if let Err(e) = result {
+        eprintln!("Error: {:?}", e);
+    }
 }
