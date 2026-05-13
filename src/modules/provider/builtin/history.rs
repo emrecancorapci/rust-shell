@@ -20,7 +20,25 @@ impl ShellCommand<Token, ServiceContainer> for History {
                 {
                     return Ok(String::new());
                 }
-                Token::String(_, _) => todo!(),
+                _ => return Err(Error::new(ErrorKind::InvalidData, "Argument is invalid")),
+            }
+        } else if tokens.len() > 2 {
+            let last_token = tokens.iter().last().unwrap();
+
+            match last_token {
+                Token::Value(count_str) if let Ok(count) = count_str.parse::<usize>() => {
+                    let history = services.history_handler.get_all();
+                    let len = &history.len();
+                    let last_n = history
+                        .iter()
+                        .enumerate()
+                        .skip(len - count as usize)
+                        .map(|(i, h)| format!("{} {}", i + 1, h))
+                        .collect::<Vec<String>>()
+                        .join("\n");
+
+                    return Ok(last_n);
+                }
                 _ => return Err(Error::new(ErrorKind::InvalidData, "Argument is invalid")),
             }
         }
