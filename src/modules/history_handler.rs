@@ -1,6 +1,6 @@
 use std::{
     fs::{self, File},
-    io::{BufRead, BufReader, Error, ErrorKind, Read, Write},
+    io::{Error, ErrorKind, Read, Write},
     path::Path,
     time::{Duration, SystemTime},
 };
@@ -18,69 +18,11 @@ impl ShellHistoryHandler for HistoryHandler {
     where
         Self: Sized,
     {
-        let env_dir = std::env::var("RSHELL_HOME");
-
-        if env_dir.is_err() {
-            let home_dir = std::env::var("HOME").unwrap_or_else(|err| {
-                panic!("Failed to get HOME directory: {}", err);
-            });
-
-            let file_path = Path::new(&home_dir).join(".rshell_history");
-
-            let result = HistoryHandler::create_history_from_path(&file_path);
-
-            if result.is_err() {
-                let mut file: File = File::create(&file_path).unwrap_or_else(|err| {
-                    panic!("Failed to create history file: {}", err);
-                });
-
-                let result = HistoryHandler::create_history_from_file(&mut file);
-
-                if result.is_err() {
-                    return HistoryHandler {
-                        current_index: 0,
-                        history: Vec::new(),
-                        path: "".into(),
-                    };
-                }
-
-                let history = result.unwrap();
-
-                return HistoryHandler {
-                    current_index: history.len(),
-                    history: history,
-                    path: file_path,
-                };
-            } else {
-                let history = result.unwrap();
-
-                return HistoryHandler {
-                    current_index: history.len(),
-                    history: history,
-                    path: file_path,
-                };
-            }
+        HistoryHandler {
+            current_index: 0,
+            history: Vec::new(),
+            path: "".into(),
         }
-
-        let history_path = Path::new(&env_dir.unwrap()).join(".rshell_history");
-
-        let result = HistoryHandler::create_history_from_path(&history_path);
-
-        if result.is_err() {
-            return HistoryHandler {
-                current_index: 0,
-                history: Vec::new(),
-                path: "".into(),
-            };
-        }
-
-        let history = result.unwrap();
-
-        return HistoryHandler {
-            current_index: history.len(),
-            history: history,
-            path: history_path,
-        };
     }
 
     fn add_entry(&mut self, entry: &str) {
@@ -135,23 +77,43 @@ impl ShellHistoryHandler for HistoryHandler {
     }
 
     fn load(&mut self) -> Result<(), Error> {
-        if !self.path.exists() || self.path.to_str().unwrap_or("").is_empty() {
-            return Ok(());
+        let mut env_dir = String::new();
+
+        let env_dir_result = std::env::var("RSHELL_HOME");
+
+        if env_dir_result.is_err() {
+            env_dir = std::env::var("HOME").unwrap_or_else(|err| {
+                panic!("Failed to get HOME directory: {}", err);
+            });
         }
 
-        let file = File::open(&self.path)?;
+        let file_path = Path::new(&env_dir).join(".rshell_history");
 
-        let reader = BufReader::new(file);
+        let result = HistoryHandler::create_history_from_path(&file_path);
 
-        for line in reader.lines() {
-            let line = line?;
+        if result.is_err() {
+            let mut file: File = File::create(&file_path).unwrap_or_else(|err| {
+                panic!("Failed to create history file: {}", err);
+            });
 
-            let entry = HistoryEntry::from_line(&line)?;
+            let result = HistoryHandler::create_history_from_file(&mut file);
 
-            self.history.push(entry);
+            if result.is_err() {
+                self.current_index = 0;
+                self.history = Vec::new();
+                self.path = "".into();
+            } else {
+                self.history = result.unwrap();
+                self.current_index = self.history.len();
+                self.path = file_path;
+            }
+        } else {
+            self.history = result.unwrap();
+            self.current_index = self.history.len();
+            self.path = file_path;
         }
 
-        Ok(())
+        return Ok(());
     }
 
     fn save(&self) -> Result<(), Error> {
@@ -255,9 +217,7 @@ impl HistoryHandler {
         let history = content_buf
             .lines()
             .map(|line| HistoryEntry::from_line(line))
-            .filter(|he| he.is_ok())
-            .map(|he| he.unwrap())
-            .collect::<Vec<HistoryEntry>>();
+            .collect::<Result<Vec<HistoryEntry>, Error>>()?;
 
         Ok(history)
     }
@@ -270,9 +230,6 @@ struct HistoryEntry {
 }
 
 impl HistoryEntry {
-    fn new(command: String, timestamp: SystemTime) -> Self {
-        HistoryEntry { timestamp, command }
-    }
     fn now(command: String) -> Self {
         HistoryEntry {
             timestamp: SystemTime::now(),
