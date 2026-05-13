@@ -5,7 +5,6 @@ use std::{
 };
 
 pub use token::Token;
-pub mod serializer;
 
 use crate::shell::core::ShellTokenizer;
 
