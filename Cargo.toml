@@ -21,6 +21,6 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.68"                                                              # error handling
 bytes = "1.3.0"                                                                # helps manage buffers
-crossterm = { version = "0.28.1", features = ["event-stream", "events"] }
+crossterm = { version = "0.29", features = ["event-stream", "events"] }
 thiserror = "1.0.38"                                                           # error handling
 tokio = { version = "1.43.0", features = ["rt", "macros", "rt-multi-thread"] }
