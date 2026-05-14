@@ -2,7 +2,6 @@ use std::{
     fs::{self, File, OpenOptions},
     io::{Error, ErrorKind, Read, Write},
     path::{Path, PathBuf},
-    time::{Duration, SystemTime},
 };
 
 use crate::shell::core::ShellHistoryHandler;
@@ -10,7 +9,7 @@ use crate::shell::core::ShellHistoryHandler;
 pub struct HistoryHandler {
     current_index: usize,
     appended_index: usize,
-    history: Vec<HistoryEntry>,
+    history: Vec<String>,
     path: PathBuf,
 }
 
@@ -28,7 +27,7 @@ impl ShellHistoryHandler for HistoryHandler {
     }
 
     fn add_entry(&mut self, entry: &str) {
-        self.history.push(HistoryEntry::now(entry.to_string()));
+        self.history.push(entry.to_string());
         self.current_index = self.history.len();
     }
 
@@ -49,7 +48,7 @@ impl ShellHistoryHandler for HistoryHandler {
 
         self.current_index -= 1;
 
-        Some(self.history[self.current_index].command.clone())
+        Some(self.history[self.current_index].to_string())
     }
 
     fn get_next(&mut self) -> Option<String> {
@@ -58,7 +57,7 @@ impl ShellHistoryHandler for HistoryHandler {
         } else {
             self.current_index += 1;
 
-            return Some(self.history[self.current_index].command.clone());
+            return Some(self.history[self.current_index].to_string());
         }
     }
 
@@ -67,15 +66,11 @@ impl ShellHistoryHandler for HistoryHandler {
             return None;
         }
 
-        Some(self.history[n].command.clone())
+        Some(self.history[n].to_string())
     }
 
-    fn get_all(&self) -> Vec<String> {
-        return self
-            .history
-            .iter()
-            .map(|entry| entry.command.clone())
-            .collect::<Vec<String>>();
+    fn get_all(&self) -> &Vec<String> {
+        return &self.history;
     }
 
     fn load(&mut self) -> Result<(), Error> {
@@ -137,19 +132,10 @@ impl ShellHistoryHandler for HistoryHandler {
         let content = self
             .history
             .iter()
-            .map(|entry| {
-                format!(
-                    "{} {}",
-                    entry
-                        .timestamp
-                        .duration_since(SystemTime::UNIX_EPOCH)
-                        .unwrap_or_else(|_| Duration::from_secs(0))
-                        .as_secs(),
-                    entry.command
-                )
-            })
+            .map(|c| c.to_string())
             .collect::<Vec<String>>()
-            .join("\n");
+            .join("\n")
+            + "\n";
 
         file.write(content.as_bytes())?;
 
@@ -176,7 +162,7 @@ impl ShellHistoryHandler for HistoryHandler {
         let content = self
             .history
             .iter()
-            .map(|entry| entry.command.to_string())
+            .map(|entry| entry.to_string())
             .collect::<Vec<String>>()
             .join("\n")
             + "\n";
@@ -216,7 +202,7 @@ impl ShellHistoryHandler for HistoryHandler {
         let content = self
             .history
             .iter()
-            .map(|entry| entry.command.to_string())
+            .map(|entry| entry.to_string())
             .skip(self.appended_index)
             .collect::<Vec<String>>()
             .join("\n")
@@ -277,7 +263,7 @@ impl ShellHistoryHandler for HistoryHandler {
 }
 
 impl HistoryHandler {
-    fn create_history_from_path(file_path: &Path) -> Result<Vec<HistoryEntry>, std::io::Error> {
+    fn create_history_from_path(file_path: &Path) -> Result<Vec<String>, std::io::Error> {
         if !file_path.exists() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
@@ -292,7 +278,7 @@ impl HistoryHandler {
         return HistoryHandler::create_history_from_file(&mut file);
     }
 
-    fn create_history_from_file(mut file: &mut File) -> Result<Vec<HistoryEntry>, std::io::Error> {
+    fn create_history_from_file(mut file: &mut File) -> Result<Vec<String>, std::io::Error> {
         let mut content_buf = String::new();
 
         File::read_to_string(&mut file, &mut content_buf).map_err(|err| {
@@ -304,46 +290,9 @@ impl HistoryHandler {
 
         let history = content_buf
             .lines()
-            .map(|line| HistoryEntry::from_line(line))
-            .collect::<Result<Vec<HistoryEntry>, Error>>()?;
+            .map(|l| l.to_string())
+            .collect::<Vec<String>>();
 
         Ok(history)
-    }
-}
-
-#[derive(Debug)]
-struct HistoryEntry {
-    timestamp: SystemTime,
-    command: String,
-}
-
-impl HistoryEntry {
-    fn now(command: String) -> Self {
-        HistoryEntry {
-            timestamp: SystemTime::now(),
-            command,
-        }
-    }
-
-    fn from_line(line: &str) -> Result<Self, std::io::Error> {
-        let (time, command) = line
-            .split_once(" ")
-            .ok_or_else(|| std::io::Error::new(ErrorKind::InvalidData, "split failed"))?;
-
-        if !time.to_string().chars().all(|c| matches!(c, '0'..='9')) {
-            return Ok(HistoryEntry {
-                timestamp: SystemTime::UNIX_EPOCH,
-                command: line.to_string(),
-            });
-        }
-
-        let timestamp = time
-            .parse::<u64>()
-            .map_err(|err| std::io::Error::new(ErrorKind::InvalidData, err.to_string()))?;
-
-        Ok(HistoryEntry {
-            timestamp: SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(timestamp),
-            command: command.to_string(),
-        })
     }
 }
