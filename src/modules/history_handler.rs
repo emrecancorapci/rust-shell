@@ -1,5 +1,5 @@
 use std::{
-    fs::{self, File},
+    fs::{self, File, OpenOptions},
     io::{Error, ErrorKind, Read, Write},
     path::{Path, PathBuf},
     time::{Duration, SystemTime},
@@ -9,6 +9,7 @@ use crate::shell::core::ShellHistoryHandler;
 
 pub struct HistoryHandler {
     current_index: usize,
+    appended_index: usize,
     history: Vec<HistoryEntry>,
     path: PathBuf,
 }
@@ -20,6 +21,7 @@ impl ShellHistoryHandler for HistoryHandler {
     {
         HistoryHandler {
             current_index: 0,
+            appended_index: 0,
             history: Vec::new(),
             path: "".into(),
         }
@@ -182,6 +184,67 @@ impl ShellHistoryHandler for HistoryHandler {
             + "\n";
 
         file.write(content.as_bytes())?;
+
+        return Ok(());
+    }
+
+    fn append_to(&mut self, file_path: PathBuf) -> Result<(), Error> {
+        let file = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(&file_path);
+
+        if file.is_err() {
+            let err = file.unwrap_err();
+
+            return Err(Error::new(
+                ErrorKind::Other,
+                format!("File read error: {}", err.to_string()),
+            ));
+        }
+
+        let mut file = file.unwrap();
+
+        match file.lock() {
+            Ok(_) => {}
+            Err(err) => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("File lock error: {}", err.to_string()),
+                ))
+            }
+        }
+
+        let content = self
+            .history
+            .iter()
+            .map(|entry| entry.command.to_string())
+            .skip(self.appended_index)
+            .collect::<Vec<String>>()
+            .join("\n")
+            + "\n";
+
+        match file.write(content.as_bytes()) {
+            Ok(_) => {}
+            Err(err) => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("File write error: {}", err.to_string()),
+                ))
+            }
+        }
+
+        match file.unlock() {
+            Ok(_) => {}
+            Err(err) => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("File unlock error: {}", err.to_string()),
+                ))
+            }
+        }
+
+        self.appended_index = self.history.len();
 
         return Ok(());
     }

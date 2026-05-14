@@ -48,6 +48,7 @@ pub trait ShellHistoryHandler {
     fn load_from(&mut self, file_path: std::path::PathBuf) -> Result<(), Error>;
     fn save(&self) -> Result<(), Error>;
     fn save_to(&self, file_path: std::path::PathBuf) -> Result<(), Error>;
+    fn append_to(&mut self, file_path: std::path::PathBuf) -> Result<(), Error>;
     fn reset_index(&mut self);
     fn set_default_path(&mut self, path: String) -> Result<(), Error>;
 }
