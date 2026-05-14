@@ -170,6 +170,22 @@ impl ShellHistoryHandler for HistoryHandler {
         Ok(())
     }
 
+    fn save_to(&self, file_path: PathBuf) -> Result<(), Error> {
+        let mut file = File::create(&file_path)?;
+
+        let content = self
+            .history
+            .iter()
+            .map(|entry| entry.command.to_string())
+            .collect::<Vec<String>>()
+            .join("\n")
+            + "\n";
+
+        file.write(content.as_bytes())?;
+
+        return Ok(());
+    }
+
     fn reset_index(&mut self) {
         self.current_index = self.history.len();
     }

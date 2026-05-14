@@ -22,6 +22,19 @@ impl ShellCommand<Token, ServiceContainer> for History {
                 }
                 _ => return Err(Error::new(ErrorKind::InvalidData, "Argument is invalid")),
             }
+        } else if tokens.contains(&Token::Argument("w".to_string(), true))
+            || tokens.contains(&Token::Argument("w".to_string(), false))
+        {
+            let last_token = tokens.iter().last().unwrap();
+
+            match last_token {
+                Token::Value(path) | Token::String(path, _)
+                    if services.history_handler.save_to(path.into()).is_ok() =>
+                {
+                    return Ok(String::new());
+                }
+                _ => return Err(Error::new(ErrorKind::InvalidData, "Argument is invalid")),
+            }
         } else if tokens.len() > 2 {
             let last_token = tokens.iter().last().unwrap();
 
