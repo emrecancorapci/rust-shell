@@ -15,12 +15,18 @@ impl ShellCommand<Token, ServiceContainer> for History {
             let last_token = tokens.iter().last().unwrap();
 
             match last_token {
-                Token::Value(path) | Token::String(path, _)
-                    if services.history_handler.load_from(path.into()).is_ok() =>
-                {
-                    return Ok(String::new());
+                Token::Value(path) | Token::String(path, _) => {
+                    match services.history_handler.load_from(path.into()) {
+                        Ok(_) => return Ok(String::new()),
+                        Err(err) => {
+                            return Err(Error::new(
+                                ErrorKind::InvalidData,
+                                format!("Error: {}", err.to_string()),
+                            ))
+                        }
+                    }
                 }
-                _ => return Err(Error::new(ErrorKind::InvalidData, "Argument is invalid")),
+                _ => return Err(Error::new(ErrorKind::InvalidData, "Invalid data")),
             }
         } else if tokens.contains(&Token::Argument("w".to_string(), true))
             || tokens.contains(&Token::Argument("w".to_string(), false))
@@ -28,10 +34,16 @@ impl ShellCommand<Token, ServiceContainer> for History {
             let last_token = tokens.iter().last().unwrap();
 
             match last_token {
-                Token::Value(path) | Token::String(path, _)
-                    if services.history_handler.save_to(path.into()).is_ok() =>
-                {
-                    return Ok(String::new());
+                Token::Value(path) | Token::String(path, _) => {
+                    match services.history_handler.save_to(path.into()) {
+                        Ok(_) => return Ok(String::new()),
+                        Err(err) => {
+                            return Err(Error::new(
+                                ErrorKind::InvalidData,
+                                format!("Error: {}", err.to_string()),
+                            ))
+                        }
+                    }
                 }
                 _ => return Err(Error::new(ErrorKind::InvalidData, "Invalid data")),
             }
