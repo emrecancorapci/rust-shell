@@ -23,6 +23,7 @@ mod backspace;
 mod ch;
 mod enter;
 mod tab;
+mod up_down;
 
 impl Shell {
     pub(crate) fn handle_event<
@@ -83,8 +84,8 @@ impl Shell {
                         self.cursor_x = self.cursor_x + 1;
                     }
                 }
-                KeyCode::Up => return Ok(()), // TODO: Implement history
-                KeyCode::Down => return Ok(()), // TODO: Implement history
+                KeyCode::Up => self.handle_up()?, // TODO: Implement history
+                KeyCode::Down => self.handle_down()?, // TODO: Implement history
                 KeyCode::Delete => return Ok(()), // TODO: Implement delete functionality
                 KeyCode::Esc => return Ok(()),
                 KeyCode::Home => todo!(),

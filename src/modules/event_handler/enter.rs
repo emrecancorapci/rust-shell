@@ -39,6 +39,7 @@ impl Shell {
                 self.cursor_x = super::PREFIX.len() as u16;
                 self.cursor_y = self.cursor_y + 1;
                 self.services.auto_complete.reset();
+                self.services.history_handler.reset_index();
                 self.buffer.clear();
 
                 return Ok(());
@@ -79,6 +80,7 @@ impl Shell {
         self.cursor_x = super::PREFIX.len() as u16;
         self.cursor_y = self.cursor_y + 1;
         self.services.auto_complete.reset();
+        self.services.history_handler.reset_index();
         self.buffer.clear();
         Ok(())
     }
