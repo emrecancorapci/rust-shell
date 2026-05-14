@@ -170,7 +170,7 @@ impl ShellHistoryHandler for HistoryHandler {
     }
 
     fn reset_index(&mut self) {
-        self.current_index = 0;
+        self.current_index = self.history.len();
     }
 
     fn clear(&mut self) -> Result<(), Error> {
