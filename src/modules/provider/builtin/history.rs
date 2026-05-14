@@ -16,7 +16,7 @@ impl ShellCommand<Token, ServiceContainer> for History {
 
             match last_token {
                 Token::Value(path) | Token::String(path, _)
-                    if services.history_handler.load_from_path(path.into()).is_ok() =>
+                    if services.history_handler.load_from(path.into()).is_ok() =>
                 {
                     return Ok(String::new());
                 }

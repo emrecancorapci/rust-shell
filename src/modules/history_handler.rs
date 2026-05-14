@@ -114,7 +114,7 @@ impl ShellHistoryHandler for HistoryHandler {
         return Ok(());
     }
 
-    fn load_from_path(&mut self, file_path: PathBuf) -> Result<(), Error> {
+    fn load_from(&mut self, file_path: PathBuf) -> Result<(), Error> {
         let loaded_history = HistoryHandler::create_history_from_path(&file_path)?;
         self.history.extend(loaded_history);
         self.current_index = self.history.len();

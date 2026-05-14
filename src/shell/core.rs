@@ -45,7 +45,7 @@ pub trait ShellHistoryHandler {
     fn get_nth(&self, n: usize) -> Option<String>;
     fn clear(&mut self) -> Result<(), Error>;
     fn load(&mut self) -> Result<(), Error>;
-    fn load_from_path(&mut self, file_path: std::path::PathBuf) -> Result<(), Error>;
+    fn load_from(&mut self, file_path: std::path::PathBuf) -> Result<(), Error>;
     fn save(&self) -> Result<(), Error>;
     fn reset_index(&mut self);
     fn set_default_path(&mut self, path: String) -> Result<(), Error>;
