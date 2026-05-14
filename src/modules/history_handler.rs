@@ -115,7 +115,8 @@ impl ShellHistoryHandler for HistoryHandler {
     }
 
     fn load_from_path(&mut self, file_path: PathBuf) -> Result<(), Error> {
-        self.history = HistoryHandler::create_history_from_path(&file_path)?;
+        let loaded_history = HistoryHandler::create_history_from_path(&file_path)?;
+        self.history.extend(loaded_history);
         self.current_index = self.history.len();
         self.path = file_path.into();
 
@@ -251,6 +252,13 @@ impl HistoryEntry {
         let (time, command) = line
             .split_once(" ")
             .ok_or_else(|| std::io::Error::new(ErrorKind::InvalidData, "split failed"))?;
+
+        if !time.to_string().chars().all(|c| matches!(c, '0'..='9')) {
+            return Ok(HistoryEntry {
+                timestamp: SystemTime::UNIX_EPOCH,
+                command: line.to_string(),
+            });
+        }
 
         let timestamp = time
             .parse::<u64>()
