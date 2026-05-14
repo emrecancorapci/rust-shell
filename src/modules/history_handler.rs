@@ -169,6 +169,10 @@ impl ShellHistoryHandler for HistoryHandler {
         Ok(())
     }
 
+    fn reset_index(&mut self) {
+        self.current_index = 0;
+    }
+
     fn clear(&mut self) -> Result<(), Error> {
         self.history.clear();
         fs::remove_file(&self.path)?;
