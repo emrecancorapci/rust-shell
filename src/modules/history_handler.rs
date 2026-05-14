@@ -79,17 +79,15 @@ impl ShellHistoryHandler for HistoryHandler {
     }
 
     fn load(&mut self) -> Result<(), Error> {
-        let mut env_dir = String::new();
-
-        let env_dir_result = std::env::var("RSHELL_HOME");
-
-        if env_dir_result.is_err() {
-            env_dir = std::env::var("HOME").unwrap_or_else(|err| {
+        let file_path = if let Ok(file_path) = std::env::var("HISTFILE") {
+            Path::new(&file_path).to_path_buf()
+        } else {
+            let env_dir = std::env::var("HOME").unwrap_or_else(|err| {
                 panic!("Failed to get HOME directory: {}", err);
             });
-        }
 
-        let file_path = Path::new(&env_dir).join(".rshell_history");
+            Path::new(&env_dir).join(".rshell_history")
+        };
 
         let mut result = HistoryHandler::create_history_from_path(&file_path);
 
