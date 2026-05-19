@@ -7,6 +7,8 @@ pub trait ExecutionPath {
     fn get_exec_path(&self) -> Option<PathBuf>;
 }
 
+const IS_EXECUTABLE: u32 = 0o111;
+
 impl ExecutionPath for &String {
     fn get_exec_path(&self) -> Option<PathBuf> {
         let path_str = env::var("PATH").unwrap_or_default();
@@ -20,7 +22,7 @@ impl ExecutionPath for &String {
                 && cmd_path.is_file()
                 && cmd_path
                     .metadata()
-                    .map(|m| m.permissions().mode() & 0o111 != 0)
+                    .map(|m| m.permissions().mode() & IS_EXECUTABLE != 0)
                     .unwrap_or(false)
             {
                 return Some(cmd_path);
