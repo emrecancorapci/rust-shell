@@ -105,6 +105,26 @@ fn double_quotes_with_wide_space() {
 }
 
 #[test]
+fn double_quotes_with_wide_space_2() {
+    let input = "echo world \\ \\ \\ \\ \\ \\ hello";
+    let expected = vec![
+        Value("echo".to_string()),
+        Space,
+        Value("world".to_string()),
+        Space,
+        Space,
+        Space,
+        Space,
+        Space,
+        Space,
+        Space,
+        Value("hello".to_string()),
+    ];
+
+    assert_parsing(input, expected);
+}
+
+#[test]
 fn escaped_backslash_in_double_quote() {
     let input = "echo \"hello\\\\world\"";
     let expected = vec![
