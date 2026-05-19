@@ -1,8 +1,4 @@
-use std::{
-    io::{Error, ErrorKind},
-    iter::{Enumerate, Peekable},
-    str::Chars,
-};
+use std::io::{Error, ErrorKind};
 
 pub use token::Token;
 
@@ -35,25 +31,20 @@ impl ShellTokenizer<Token> for Tokenizer {
                 ParseMode::None => match ch {
                     '\'' => mode = ParseMode::SingleQuote,
                     '"' => mode = ParseMode::DoubleQuote,
-                    '\\' => {
-                        mode = ParseMode::Value;
-
-                        match iter.peek() {
-                            Some(_) => {
-                                let (_index, ch) = iter.next().unwrap();
-
-                                buffer.push(ch)
-                            }
-                            None => todo!(),
+                    '\\' if let Some((_i, val)) = iter.peek() => {
+                        if val == &' ' {
+                            tokens.push(Token::Space)
+                        } else {
+                            buffer.push(*val);
+                            mode = ParseMode::Value;
                         }
                     }
+                    '-' if matches!(iter.peek(), Some(&(_, '-'))) => {
+                        iter.next();
+                        mode = ParseMode::DoubleDashArg;
+                    }
                     '-' => {
-                        if matches!(iter.peek(), Some(&(_, '-'))) {
-                            iter.next();
-                            mode = ParseMode::DoubleDashArg
-                        } else {
-                            mode = ParseMode::SingleDashArg
-                        }
+                        mode = ParseMode::SingleDashArg;
                     }
                     'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '.' | '/' | '~' | '>'
                         if buffer.is_empty() =>
@@ -74,40 +65,34 @@ impl ShellTokenizer<Token> for Tokenizer {
                     }
                 },
                 ParseMode::Value => match ch {
-                    'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' | '.' | '/' | ':' => {
+                    'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' | '.' | '/' | ':' | '>' => {
                         buffer.push(ch)
                     }
-                    '\\' => {
-                        let ch = iter.peek();
+                    '\\' if let Some((_i, val)) = iter.peek() => {
+                        mode = ParseMode::Value;
+                        buffer.push(*val)
+                    }
+                    '"' => {
+                        tokens.push(generate_token(mode, &buffer));
 
-                        match ch {
-                            Some(_) => {
-                                let (_index, ch) = iter.next().unwrap();
+                        mode = ParseMode::DoubleQuote;
+                        sub_mode = ParseMode::None;
+                        buffer = String::new();
+                    }
+                    '\'' => {
+                        tokens.push(generate_token(mode, &buffer));
 
-                                buffer.push(ch)
-                            }
-                            None => todo!(),
-                        }
+                        mode = ParseMode::SingleQuote;
+                        sub_mode = ParseMode::None;
+                        buffer = String::new();
                     }
                     ' ' => {
                         tokens.push(generate_token(mode, &buffer));
                         tokens.push(Token::Space);
 
-                        buffer = String::new();
                         mode = ParseMode::None;
                         sub_mode = ParseMode::None;
-                    }
-                    '"' => {
-                        tokens.push(generate_token(mode, &buffer));
                         buffer = String::new();
-                        mode = ParseMode::DoubleQuote;
-                        sub_mode = ParseMode::None;
-                    }
-                    '\'' => {
-                        tokens.push(generate_token(mode, &buffer));
-                        buffer = String::new();
-                        mode = ParseMode::SingleQuote;
-                        sub_mode = ParseMode::None;
                     }
                     _ => {
                         return Err(Error::new(
