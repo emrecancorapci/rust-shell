@@ -1,11 +1,11 @@
 use std::io::ErrorKind;
 
 use shell_starter_rust::{
-    shell::core::ShellTokenizer,
     modules::tokenizer::{
-        Token::{self, Appender, Argument, Redirector, Space, String, Value},
+        Token::{self, Argument, Space, String, Value},
         Tokenizer,
     },
+    shell::core::ShellTokenizer,
 };
 
 // Basic
@@ -196,7 +196,7 @@ fn redirection_operator() {
         Space,
         String("hello world".to_string(), true),
         Space,
-        Redirector('1'),
+        Value('>'.to_string()),
         Space,
         String("./hello.md".to_string(), true),
     ];
@@ -212,7 +212,7 @@ fn error_redirection_operator() {
         Space,
         String("hello world".to_string(), true),
         Space,
-        Redirector('2'),
+        Value("2>".to_string()),
         Space,
         String("./hello.md".to_string(), true),
     ];
@@ -222,7 +222,10 @@ fn error_redirection_operator() {
 
 #[test]
 fn redirection_without_target() {
-    assert_parsing_err("echo >");
+    let input = "echo >";
+    let expected = vec![Value("echo".to_string()), Space, Value(">".to_string())];
+
+    assert_parsing(input, expected);
 }
 
 #[test]
@@ -233,7 +236,7 @@ fn appender() {
         Space,
         String("hello world".to_string(), true),
         Space,
-        Appender('1'),
+        Value(">>".to_string()),
         Space,
         String("./hello.md".to_string(), true),
     ];
@@ -249,7 +252,7 @@ fn appender_with_number() {
         Space,
         String("hello world".to_string(), true),
         Space,
-        Appender('2'),
+        Value("2>>".to_string()),
         Space,
         String("./hello.md".to_string(), true),
     ];

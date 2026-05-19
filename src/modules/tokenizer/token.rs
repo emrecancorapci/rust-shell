@@ -1,16 +1,9 @@
-use std::{
-    fmt::Display,
-    io::{Error, ErrorKind},
-};
-
 #[derive(PartialEq, Eq, Debug)]
 pub enum Token {
     Space,
     Value(String),
     Argument(String, bool),
     String(String, bool),
-    Redirector(char),
-    Appender(char),
 }
 
 impl Token {
@@ -23,70 +16,43 @@ impl Token {
                 format!("{}{}", dashes, val.to_string())
             }
             Token::String(val, _) => val.to_string(),
-            Token::Redirector(num) => format!("{}>", num),
-            Token::Appender(num) => format!("{}>>", num),
         }
     }
 
     pub fn is_redirection_token(&self) -> bool {
+        self.is_append() || self.is_redirect()
+    }
+
+    pub fn is_redirect(&self) -> bool {
         match self {
-            Token::Space => false,
-            Token::Value(_) => false,
-            Token::Argument(_, _) => false,
-            Token::String(_, _) => false,
-            Token::Redirector(_) => true,
-            Token::Appender(_) => true,
+            Token::Value(val) if val == ">" || val == "1>" || val == "2>" => true,
+            _ => false,
         }
     }
 
-    pub fn is_redirection_ok(&self) -> Result<bool, Error> {
+    pub fn is_append(&self) -> bool {
         match self {
-            Token::Space => Err(Error::new(
-                ErrorKind::Other,
-                "Checked token is not a redirection token",
-            )),
-            Token::Value(_) => Err(Error::new(
-                ErrorKind::Other,
-                "Checked token is not a redirection token",
-            )),
-            Token::Argument(_, _) => Err(Error::new(
-                ErrorKind::Other,
-                "Checked token is not a redirection token",
-            )),
-            Token::String(_, _) => Err(Error::new(
-                ErrorKind::Other,
-                "Checked token is not a redirection token",
-            )),
-            Token::Redirector(prefix) => Ok(prefix == &'1'),
-            Token::Appender(prefix) => Ok(prefix == &'1'),
+            Token::Value(val) if val == ">>" || val == "1>>" || val == "2>>" => true,
+            _ => false,
         }
     }
 
-    pub fn is_redirection_err(&self) -> Result<bool, Error> {
+    pub fn is_redirecting_ok(&self) -> bool {
         match self {
-            Token::Space => Err(Error::new(
-                ErrorKind::Other,
-                "Checked token is not a redirection token",
-            )),
-            Token::Value(_) => Err(Error::new(
-                ErrorKind::Other,
-                "Checked token is not a redirection token",
-            )),
-            Token::Argument(_, _) => Err(Error::new(
-                ErrorKind::Other,
-                "Checked token is not a redirection token",
-            )),
-            Token::String(_, _) => Err(Error::new(
-                ErrorKind::Other,
-                "Checked token is not a redirection token",
-            )),
-            Token::Redirector(prefix) => Ok(prefix == &'2'),
-            Token::Appender(prefix) => Ok(prefix == &'2'),
+            Token::Value(val) if val == ">" || val == "1>" ||  val == ">>"  || val == "1>>"=> true,
+            _ => false,
+        }
+    }
+
+    pub fn is_redirecting_err(&self) -> bool {
+        match self {
+            Token::Value(val) if val == "2>" || val == "2>>" => true,
+            _ => false,
         }
     }
 }
 
-impl Display for Token {
+impl std::fmt::Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self)
     }
@@ -99,8 +65,6 @@ impl Clone for Token {
             Self::Value(arg0) => Self::Value(arg0.clone()),
             Self::Argument(arg0, arg1) => Self::Argument(arg0.clone(), arg1.clone()),
             Self::String(arg0, arg1) => Self::String(arg0.clone(), arg1.clone()),
-            Self::Redirector(arg0) => Self::Redirector(arg0.clone()),
-            Self::Appender(arg0) => Self::Appender(arg0.clone()),
         }
     }
 }

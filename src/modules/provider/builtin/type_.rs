@@ -46,12 +46,6 @@ impl ShellCommand<Token, ServiceContainer> for Type {
                 }
             },
             Token::Argument(_, _) => todo!(),
-            _ => {
-                return Err(Error::new(
-                    ErrorKind::InvalidInput,
-                    "bash: syntax error near unexpected token 'newline'",
-                ))
-            }
         }
     }
 }

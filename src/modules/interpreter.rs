@@ -138,10 +138,14 @@ impl Interpreter {
         output: Option<Vec<u8>>,
         error: Option<Error>,
     ) -> Result<Vec<u8>, Error> {
-        let path = redirection_tokens.get(2).unwrap().serialize();
+        let path = if let Some(token) = redirection_tokens.get(2) {
+            Ok(token.serialize())
+        } else {
+            Err(Error::new(ErrorKind::InvalidData, "No redirection target"))
+        }?;
 
-        match redirection_tokens.first().unwrap() {
-            Token::Redirector('1') => {
+        match redirection_tokens.first() {
+            Some(token) if token.is_redirect() && token.is_redirecting_ok() => {
                 if output.is_none() {
                     return match error {
                         Some(err) => Err(err),
@@ -156,7 +160,7 @@ impl Interpreter {
                     None => Ok(vec![]),
                 }
             }
-            Token::Redirector('2') => {
+            Some(token) if token.is_redirect() && token.is_redirecting_err() => {
                 fs::write(
                     path,
                     &error
@@ -170,7 +174,7 @@ impl Interpreter {
                     None => Ok(vec![]),
                 }
             }
-            Token::Appender('1') => {
+            Some(token) if token.is_append() && token.is_redirecting_ok() => {
                 if output.is_none() {
                     Self::append_to_file(&path, b"")?;
 
@@ -187,7 +191,7 @@ impl Interpreter {
                     None => Ok(vec![]),
                 }
             }
-            Token::Appender('2') => {
+            Some(token) if token.is_append() && token.is_redirecting_err() => {
                 if error.is_none() {
                     return match output {
                         Some(output) => Ok(output),

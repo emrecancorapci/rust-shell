@@ -28,8 +28,6 @@ impl ShellCommand<Token, ServiceContainer> for Echo {
                 Token::Value(str) | Token::String(str, _) if !str.is_empty() => {
                     string.push_str(str)
                 }
-                Token::Appender(_) => return Ok(string),
-                Token::Redirector(_) => return Ok(string),
                 _ => {}
             }
         }

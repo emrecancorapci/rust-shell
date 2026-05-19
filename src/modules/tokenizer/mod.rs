@@ -55,20 +55,12 @@ impl ShellTokenizer<Token> for Tokenizer {
                             mode = ParseMode::SingleDashArg
                         }
                     }
-                    'a'..='z' | 'A'..='Z' | '_' | '.' | '/' | '~' if buffer.is_empty() => {
+                    'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '.' | '/' | '~' | '>'
+                        if buffer.is_empty() =>
+                    {
                         mode = ParseMode::Value;
                         buffer.push(ch);
                     }
-                    '0'..='9' if buffer.is_empty() => {
-                        if let Some((_, '>')) = iter.peek() {
-                            iter.next();
-                            tokens.push(parse_redirector(&mut iter, ch)?)
-                        } else {
-                            buffer.push(ch);
-                            mode = ParseMode::Value;
-                        }
-                    }
-                    '>' => tokens.push(parse_redirector(&mut iter, '1')?),
                     ' ' => {
                         if tokens.last() != Some(&Token::Space) {
                             tokens.push(Token::Space)
@@ -214,20 +206,6 @@ impl ShellTokenizer<Token> for Tokenizer {
                 return Ok(tokens.to_vec());
             }
         }
-    }
-}
-
-fn parse_redirector(
-    iter: &mut Peekable<Enumerate<Chars<'_>>>,
-    prefix: char,
-) -> Result<Token, Error> {
-    match iter.peek() {
-        Some((_, '>')) => {
-            iter.next();
-            Ok(Token::Appender(prefix))
-        }
-        Some(_) => Ok(Token::Redirector(prefix)),
-        None => return Err(Error::new(ErrorKind::InvalidInput, "No redirection target")),
     }
 }
 
