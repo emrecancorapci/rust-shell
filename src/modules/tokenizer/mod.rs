@@ -32,12 +32,10 @@ impl ShellTokenizer<Token> for Tokenizer {
                     '\'' => mode = ParseMode::SingleQuote,
                     '"' => mode = ParseMode::DoubleQuote,
                     '\\' if let Some((_i, val)) = iter.peek() => {
-                        if val == &' ' {
-                            tokens.push(Token::Space)
-                        } else {
-                            buffer.push(*val);
-                            mode = ParseMode::Value;
-                        }
+                        buffer.push(*val);
+                        mode = ParseMode::Value;
+
+                        iter.next();
                     }
                     '-' if matches!(iter.peek(), Some(&(_, '-'))) => {
                         iter.next();
@@ -69,8 +67,8 @@ impl ShellTokenizer<Token> for Tokenizer {
                         buffer.push(ch)
                     }
                     '\\' if let Some((_i, val)) = iter.peek() => {
-                        mode = ParseMode::Value;
-                        buffer.push(*val)
+                        buffer.push(*val);
+                        iter.next();
                     }
                     '"' => {
                         tokens.push(generate_token(mode, &buffer));
@@ -197,7 +195,7 @@ impl ShellTokenizer<Token> for Tokenizer {
 fn generate_token(mode: ParseMode, value: &str) -> Token {
     match mode {
         ParseMode::None => panic!("Tried to push a token before it started to parse anything"),
-        ParseMode::Value => Token::Value(value.to_string()),
+        ParseMode::Value => Token::Value(value.trim().to_string()),
         ParseMode::SingleQuote => Token::String(value.to_string(), false),
         ParseMode::DoubleQuote => Token::String(value.to_string(), true),
         ParseMode::SingleDashArg => Token::Argument(value.to_string(), false),
