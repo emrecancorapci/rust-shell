@@ -4,8 +4,8 @@ pub use token::Token;
 
 use crate::shell::core::ShellTokenizer;
 
-mod token;
 pub mod helpers;
+mod token;
 
 #[derive(PartialEq, Eq, Debug)]
 enum ParseMode {
@@ -43,9 +43,7 @@ impl ShellTokenizer<Token> for Tokenizer {
                         buffer.push(ch);
                     }
                     ' ' => {
-                        if tokens.last() != Some(&Token::Space) {
-                            tokens.push(Token::Space)
-                        }
+                        continue;
                     }
                     _ => {
                         return Err(Error::new(
@@ -78,7 +76,6 @@ impl ShellTokenizer<Token> for Tokenizer {
                     }
                     ' ' => {
                         tokens.push(generate_token(mode, &buffer));
-                        tokens.push(Token::Space);
 
                         mode = ParseMode::None;
                         sub_mode = ParseMode::None;

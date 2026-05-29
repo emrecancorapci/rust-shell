@@ -1,7 +1,13 @@
 use std::io::{Error, ErrorKind};
 
 use crate::{
-    modules::{service_container::ServiceContainer, tokenizer::Token},
+    modules::{
+        service_container::ServiceContainer,
+        tokenizer::{
+            helpers::{HasArguments, Argument, Redirectable},
+            Token,
+        },
+    },
     shell::core::{ShellCommand, ShellHistoryHandler},
 };
 
@@ -9,62 +15,44 @@ pub struct History {}
 
 impl ShellCommand<Token, ServiceContainer> for History {
     fn run(tokens: &[Token], services: &mut ServiceContainer) -> Result<String, std::io::Error> {
-        if tokens.contains(&Token::Value("--r".to_string()))
-            || tokens.contains(&Token::Value("-r".to_string()))
-        {
-            let last_token = tokens.iter().last().unwrap();
-
-            match last_token {
-                Token::Value(path) | Token::String(path, _) => {
-                    match services.history_handler.load_from(path.into()) {
-                        Ok(_) => return Ok(String::new()),
-                        Err(err) => {
-                            return Err(Error::new(
-                                ErrorKind::InvalidData,
-                                format!("Error: {}", err.to_string()),
-                            ))
-                        }
+        if let Some(path) = tokens.get_arg_value("r") {
+            if !path.is_arg() && !path.is_redirect() {
+                match services.history_handler.load_from(path.into()) {
+                    Ok(_) => return Ok(String::new()),
+                    Err(err) => {
+                        return Err(Error::new(
+                            ErrorKind::InvalidData,
+                            format!("Error: {}", err.to_string()),
+                        ))
                     }
                 }
-                _ => return Err(Error::new(ErrorKind::InvalidData, "Invalid data")),
+            } else {
+                return Err(Error::new(ErrorKind::InvalidData, "Invalid data"));
             }
-        } else if tokens.contains(&Token::Value("--w".to_string()))
-            || tokens.contains(&Token::Value("-w".to_string()))
-        {
-            let last_token = tokens.iter().last().unwrap();
-
-            match last_token {
-                Token::Value(path) | Token::String(path, _) => {
-                    match services.history_handler.save_to(path.into()) {
-                        Ok(_) => return Ok(String::new()),
-                        Err(err) => {
-                            return Err(Error::new(
-                                ErrorKind::InvalidData,
-                                format!("Error: {}", err.to_string()),
-                            ))
-                        }
+        } else if let Some(path) = tokens.get_arg_value("w") {
+            if !path.is_arg() && !path.is_redirect() {
+                match services.history_handler.save_to(path.into()) {
+                    Ok(_) => return Ok(String::new()),
+                    Err(err) => {
+                        return Err(Error::new(
+                            ErrorKind::InvalidData,
+                            format!("Error: {}", err.to_string()),
+                        ))
                     }
                 }
-                _ => return Err(Error::new(ErrorKind::InvalidData, "Invalid data")),
             }
-        } else if tokens.contains(&Token::Value("--a".to_string()))
-            || tokens.contains(&Token::Value("-a".to_string()))
-        {
-            let last_token = tokens.iter().last().unwrap();
-
-            match last_token {
-                Token::Value(path) | Token::String(path, _) => {
-                    match services.history_handler.append_to(path.into()) {
-                        Ok(_) => return Ok(String::new()),
-                        Err(err) => {
-                            return Err(Error::new(
-                                ErrorKind::InvalidData,
-                                format!("Error: {}", err.to_string()),
-                            ))
-                        }
+        }
+        if let Some(path) = tokens.get_arg_value("r") {
+            if !path.is_arg() && !path.is_redirect() {
+                match services.history_handler.append_to(path.into()) {
+                    Ok(_) => return Ok(String::new()),
+                    Err(err) => {
+                        return Err(Error::new(
+                            ErrorKind::InvalidData,
+                            format!("Error: {}", err.to_string()),
+                        ))
                     }
                 }
-                _ => return Err(Error::new(ErrorKind::InvalidData, "Invalid data")),
             }
         } else if tokens.len() > 2 {
             let last_token = tokens.iter().last().unwrap();

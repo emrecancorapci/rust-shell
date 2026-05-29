@@ -12,7 +12,7 @@ pub struct Type {}
 
 impl ShellCommand<Token, ServiceContainer> for Type {
     fn run(tokens: &[Token], _services: &mut ServiceContainer) -> Result<String, Error> {
-        if tokens.len() < 3 {
+        if tokens.len() < 2 {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
                 "This command needs argument.",
@@ -28,12 +28,6 @@ impl ShellCommand<Token, ServiceContainer> for Type {
 
         // TODO[BUG]: Also happens here.
         match tokens.get(2).unwrap() {
-            Token::Space => {
-                return Err(Error::new(
-                    ErrorKind::UnexpectedEof,
-                    "Third token shouldn't be a space. Fix this.",
-                ))
-            }
             Token::Value(input) | Token::String(input, _)
                 if let Some(path) = input.get_exec_path() =>
             {

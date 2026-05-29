@@ -15,23 +15,9 @@ impl ShellCommand<Token, ServiceContainer> for Echo {
             ));
         }
 
-        let mut string = String::new();
-        let mut iter = tokens.iter().skip(2).enumerate();
-
-        while let Some((i, token)) = iter.next() {
-            match token {
-                Token::Space => {
-                    if i > 0 {
-                        string.push(' ');
-                    }
-                }
-                Token::Value(str) | Token::String(str, _) if !str.is_empty() => {
-                    string.push_str(str)
-                }
-                _ => {}
-            }
-        }
-
-        return Ok(string);
+        return Ok(tokens
+            .iter()
+            .skip(2)
+            .fold(String::new(), |a, b| a + &b.serialize()));
     }
 }

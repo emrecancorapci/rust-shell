@@ -2,7 +2,7 @@ use std::io::ErrorKind;
 
 use shell_starter_rust::{
     modules::tokenizer::{
-        Token::{self, Space, String, Value},
+        Token::{self, String, Value},
         Tokenizer,
     },
     shell::core::ShellTokenizer,
@@ -21,11 +21,7 @@ fn empty_input() {
 #[test]
 fn basic_command() {
     let input = "hello world";
-    let expected = vec![
-        Value("hello".to_string()),
-        Space,
-        Value("world".to_string()),
-    ];
+    let expected = vec![Value("hello".to_string()), Value("world".to_string())];
 
     assert_parsing(input, expected);
 }
@@ -33,11 +29,7 @@ fn basic_command() {
 #[test]
 fn multiple_spaces() {
     let input = "hello                 world";
-    let expected = vec![
-        Value("hello".to_string()),
-        Space,
-        Value("world".to_string()),
-    ];
+    let expected = vec![Value("hello".to_string()), Value("world".to_string())];
 
     assert_parsing(input, expected);
 }
@@ -49,7 +41,6 @@ fn single_quote() {
     let input = "echo 'example test'";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("example test".to_string(), false),
     ];
 
@@ -66,7 +57,6 @@ fn double_quote() {
     let input = "echo \"hello world\"";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("hello world".to_string(), true),
     ];
 
@@ -85,7 +75,6 @@ fn double_quotes_with_escaped_characters() {
     let input = "echo \"escaped \\\"double quotes\\\"\"";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("escaped \"double quotes\"".to_string(), true),
     ];
 
@@ -97,7 +86,6 @@ fn double_quotes_with_wide_space() {
     let input = "echo \"hello                   world\"";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("hello                   world".to_string(), true),
     ];
 
@@ -109,7 +97,6 @@ fn double_quotes_with_wide_space_2() {
     let input = "echo world\\ \\ \\ \\ \\ \\ hello";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         Value("world      hello".to_string()),
     ];
 
@@ -121,7 +108,6 @@ fn escaped_backslash_in_double_quote() {
     let input = "echo \"hello\\\\world\"";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("hello\\world".to_string(), true),
     ];
 
@@ -133,9 +119,7 @@ fn escaped_backslash_in_double_quote_2() {
     let input = "echo \\'\\\"example script\\\"\\'";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         Value("\'\"example".to_string()),
-        Space,
         Value("script\"\'".to_string()),
     ];
 
@@ -147,7 +131,6 @@ fn double_inside_single_quote() {
     let input = "echo '\"hello world\"'";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("\"hello world\"".to_string(), false),
     ];
 
@@ -159,7 +142,6 @@ fn single_inside_double_quote() {
     let input = "echo \"'hello world'\"";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("'hello world'".to_string(), true),
     ];
 
@@ -171,13 +153,9 @@ fn mixed_quotes_and_arguments() {
     let input = "cmd 'single' \"double\" --arg1 -a";
     let expected = vec![
         Value("cmd".to_string()),
-        Space,
         String("single".to_string(), false),
-        Space,
         String("double".to_string(), true),
-        Space,
         Value("--arg1".to_string()),
-        Space,
         Value("-a".to_string()),
     ];
 
@@ -191,9 +169,7 @@ fn single_dash_argument() {
     let input = "echo -s 'hello world'";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         Value("-s".to_string()),
-        Space,
         String("hello world".to_string(), false),
     ];
 
@@ -205,9 +181,7 @@ fn double_dash_argument() {
     let input = "echo --silent 'hello world'";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         Value("--silent".to_string()),
-        Space,
         String("hello world".to_string(), false),
     ];
 
@@ -219,11 +193,8 @@ fn redirection_operator() {
     let input = "echo \"hello world\" > \"./hello.md\"";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("hello world".to_string(), true),
-        Space,
         Value('>'.to_string()),
-        Space,
         String("./hello.md".to_string(), true),
     ];
 
@@ -235,11 +206,8 @@ fn error_redirection_operator() {
     let input = "echo \"hello world\" 2> \"./hello.md\"";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("hello world".to_string(), true),
-        Space,
         Value("2>".to_string()),
-        Space,
         String("./hello.md".to_string(), true),
     ];
 
@@ -249,7 +217,7 @@ fn error_redirection_operator() {
 #[test]
 fn redirection_without_target() {
     let input = "echo >";
-    let expected = vec![Value("echo".to_string()), Space, Value(">".to_string())];
+    let expected = vec![Value("echo".to_string()), Value(">".to_string())];
 
     assert_parsing(input, expected);
 }
@@ -259,11 +227,8 @@ fn appender() {
     let input = "echo \"hello world\" >> \"./hello.md\"";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("hello world".to_string(), true),
-        Space,
         Value(">>".to_string()),
-        Space,
         String("./hello.md".to_string(), true),
     ];
 
@@ -275,11 +240,8 @@ fn appender_with_number() {
     let input = "echo \"hello world\" 2>> \"./hello.md\"";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("hello world".to_string(), true),
-        Space,
         Value("2>>".to_string()),
-        Space,
         String("./hello.md".to_string(), true),
     ];
 
@@ -298,9 +260,7 @@ fn mixed_quotes() {
     let input = "echo \"double quotes\" 'single quotes'";
     let expected = vec![
         Value("echo".to_string()),
-        Space,
         String("double quotes".to_string(), true),
-        Space,
         String("single quotes".to_string(), false),
     ];
 

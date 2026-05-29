@@ -5,7 +5,13 @@ use std::{
 };
 
 use crate::{
-    modules::{service_container::ServiceContainer, tokenizer::Token},
+    modules::{
+        service_container::ServiceContainer,
+        tokenizer::{
+            helpers::{Argument, Redirectable},
+            Token,
+        },
+    },
     shell::core::{ShellCommandProvider, ShellInterpreter},
     util::{error::AsBytes, output::SplitOutput, path::ExecutionPath},
 };
@@ -17,7 +23,7 @@ impl ShellInterpreter<Token, ServiceContainer> for Interpreter {
         tokens: &[Token],
         services: &mut ServiceContainer,
     ) -> Result<Vec<u8>, Error> {
-        match tokens.iter().any(|t| t.is_redirection_token()) {
+        match tokens.iter().any(|t| t.is_redirector()) {
             true => Self::handle_redirected_input::<CommandProvider>(tokens, services),
             false => Self::handle_direct_input::<CommandProvider>(tokens, services),
         }
@@ -29,10 +35,9 @@ impl Interpreter {
         tokens: &[Token],
         services: &mut ServiceContainer,
     ) -> Result<Vec<u8>, Error> {
-        let cmd_token = tokens.iter().find(|token| match token {
-            Token::Value(_) | Token::String(_, _) => true,
-            _ => false,
-        });
+        let cmd_token = tokens
+            .iter()
+            .find(|token| !token.is_arg() && !token.is_redirector());
 
         if cmd_token.is_none() {
             return Err(Error::new(
@@ -74,7 +79,6 @@ impl Interpreter {
                     Err(err) => return Err(err),
                 }
             }
-            _ => return Err(Error::new(ErrorKind::InvalidInput, "error: invalid input")),
         }
     }
 
@@ -82,22 +86,8 @@ impl Interpreter {
         let args: Vec<String> = tokens
             .iter()
             .skip(2)
-            .fold(Vec::<Vec<&Token>>::new(), |mut groups, token| {
-                if matches!(token, Token::Space) {
-                    // A space starts a new group
-                    groups.push(Vec::new());
-                } else {
-                    // Append to the last group, or create first group
-                    if groups.is_empty() {
-                        groups.push(Vec::new());
-                    }
-                    groups.last_mut().unwrap().push(token);
-                }
-                groups
-            })
-            .into_iter()
+            .map(|g| g.serialize())
             .filter(|g| !g.is_empty())
-            .map(|g| g.iter().map(|t| t.serialize()).collect::<String>())
             .collect();
 
         std::process::Command::new(cmd).args(args).output()
@@ -107,20 +97,21 @@ impl Interpreter {
         tokens: &[Token],
         services: &mut ServiceContainer,
     ) -> Result<Vec<u8>, Error> {
-        let redirection_index = tokens
-            .iter()
-            .position(|t| t.is_redirection_token())
-            .unwrap();
+        let redirection_index = tokens.iter().position(|t| t.is_redirector()).unwrap();
 
         let (tokens, redirection_tokens) = tokens.split_at(redirection_index);
 
         let (response, error) = match tokens.first() {
-            Some(Token::Value(cmd) | Token::String(cmd, _)) if cmd.get_exec_path().is_some() => {
+            Some(Token::Value(cmd) | Token::String(cmd, _))
+                if !cmd.is_arg() && !cmd.is_redirect() && cmd.get_exec_path().is_some() =>
+            {
                 let output = Self::execute_external(tokens, cmd)?;
 
                 output.split_output()
             }
-            Some(Token::Value(cmd) | Token::String(cmd, _)) => {
+            Some(Token::Value(cmd) | Token::String(cmd, _))
+                if !cmd.is_arg() && !cmd.is_redirect() =>
+            {
                 match CommandProvider::run(cmd, &tokens.to_vec(), services) {
                     Ok(response) => (Some(response.as_bytes().to_vec()), None),
                     Err(err) => (None, Some(err)),
