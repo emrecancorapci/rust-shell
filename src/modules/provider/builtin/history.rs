@@ -9,8 +9,8 @@ pub struct History {}
 
 impl ShellCommand<Token, ServiceContainer> for History {
     fn run(tokens: &[Token], services: &mut ServiceContainer) -> Result<String, std::io::Error> {
-        if tokens.contains(&Token::Argument("r".to_string(), true))
-            || tokens.contains(&Token::Argument("r".to_string(), false))
+        if tokens.contains(&Token::Value("--r".to_string()))
+            || tokens.contains(&Token::Value("-r".to_string()))
         {
             let last_token = tokens.iter().last().unwrap();
 
@@ -28,8 +28,8 @@ impl ShellCommand<Token, ServiceContainer> for History {
                 }
                 _ => return Err(Error::new(ErrorKind::InvalidData, "Invalid data")),
             }
-        } else if tokens.contains(&Token::Argument("w".to_string(), true))
-            || tokens.contains(&Token::Argument("w".to_string(), false))
+        } else if tokens.contains(&Token::Value("--w".to_string()))
+            || tokens.contains(&Token::Value("-w".to_string()))
         {
             let last_token = tokens.iter().last().unwrap();
 
@@ -47,8 +47,8 @@ impl ShellCommand<Token, ServiceContainer> for History {
                 }
                 _ => return Err(Error::new(ErrorKind::InvalidData, "Invalid data")),
             }
-        } else if tokens.contains(&Token::Argument("a".to_string(), true))
-            || tokens.contains(&Token::Argument("a".to_string(), false))
+        } else if tokens.contains(&Token::Value("--a".to_string()))
+            || tokens.contains(&Token::Value("-a".to_string()))
         {
             let last_token = tokens.iter().last().unwrap();
 

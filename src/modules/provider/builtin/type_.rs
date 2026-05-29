@@ -34,18 +34,17 @@ impl ShellCommand<Token, ServiceContainer> for Type {
                     "Third token shouldn't be a space. Fix this.",
                 ))
             }
-            Token::Value(input) | Token::String(input, _) => match input.get_exec_path() {
-                Some(path) => {
-                    return Ok(format!("{} is {}", input, path.to_str().unwrap()));
-                }
-                None => {
-                    return Err(Error::new(
-                        ErrorKind::InvalidInput,
-                        format!("{} not found", input),
-                    ))
-                }
-            },
-            Token::Argument(_, _) => todo!(),
+            Token::Value(input) | Token::String(input, _)
+                if let Some(path) = input.get_exec_path() =>
+            {
+                Ok(format!("{} is {}", input, path.to_str().unwrap()))
+            }
+            Token::Value(input) | Token::String(input, _) => {
+                return Err(Error::new(
+                    ErrorKind::InvalidInput,
+                    format!("{} not found", input),
+                ))
+            }
         }
     }
 }

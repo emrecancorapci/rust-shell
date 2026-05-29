@@ -2,7 +2,7 @@ use std::io::ErrorKind;
 
 use shell_starter_rust::{
     modules::tokenizer::{
-        Token::{self, Argument, Space, String, Value},
+        Token::{self, Space, String, Value},
         Tokenizer,
     },
     shell::core::ShellTokenizer,
@@ -136,7 +136,7 @@ fn escaped_backslash_in_double_quote_2() {
         Space,
         Value("\'\"example".to_string()),
         Space,
-        Value("script\'\"".to_string())
+        Value("script\"\'".to_string()),
     ];
 
     assert_parsing(input, expected);
@@ -176,9 +176,9 @@ fn mixed_quotes_and_arguments() {
         Space,
         String("double".to_string(), true),
         Space,
-        Argument("arg1".to_string(), true),
+        Value("--arg1".to_string()),
         Space,
-        Argument("a".to_string(), false),
+        Value("-a".to_string()),
     ];
 
     assert_parsing(input, expected);
@@ -192,7 +192,7 @@ fn single_dash_argument() {
     let expected = vec![
         Value("echo".to_string()),
         Space,
-        Argument("s".to_string(), false),
+        Value("-s".to_string()),
         Space,
         String("hello world".to_string(), false),
     ];
@@ -206,7 +206,7 @@ fn double_dash_argument() {
     let expected = vec![
         Value("echo".to_string()),
         Space,
-        Argument("silent".to_string(), true),
+        Value("--silent".to_string()),
         Space,
         String("hello world".to_string(), false),
     ];

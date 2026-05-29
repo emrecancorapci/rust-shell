@@ -5,6 +5,7 @@ pub use token::Token;
 use crate::shell::core::ShellTokenizer;
 
 mod token;
+pub mod helpers;
 
 #[derive(PartialEq, Eq, Debug)]
 enum ParseMode {
@@ -12,8 +13,6 @@ enum ParseMode {
     Value,
     SingleQuote,
     DoubleQuote,
-    SingleDashArg,
-    DoubleDashArg,
 }
 
 pub struct Tokenizer {}
@@ -37,14 +36,7 @@ impl ShellTokenizer<Token> for Tokenizer {
 
                         iter.next();
                     }
-                    '-' if matches!(iter.peek(), Some(&(_, '-'))) => {
-                        iter.next();
-                        mode = ParseMode::DoubleDashArg;
-                    }
-                    '-' => {
-                        mode = ParseMode::SingleDashArg;
-                    }
-                    'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '.' | '/' | '~' | '>'
+                    'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '.' | '/' | '~' | '>' | '-'
                         if buffer.is_empty() =>
                     {
                         mode = ParseMode::Value;
@@ -148,23 +140,6 @@ impl ShellTokenizer<Token> for Tokenizer {
                     },
                     _ => buffer.push(ch),
                 },
-                ParseMode::SingleDashArg | ParseMode::DoubleDashArg => match ch {
-                    'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' => buffer.push(ch),
-                    ' ' => {
-                        tokens.push(generate_token(mode, &buffer));
-                        tokens.push(Token::Space);
-
-                        buffer = String::new();
-                        mode = ParseMode::None;
-                        sub_mode = ParseMode::None;
-                    }
-                    _ => {
-                        return Err(Error::new(
-                            ErrorKind::InvalidInput,
-                            format!("Invalid character at {}", i),
-                        ));
-                    }
-                },
             }
         }
 
@@ -198,7 +173,5 @@ fn generate_token(mode: ParseMode, value: &str) -> Token {
         ParseMode::Value => Token::Value(value.trim().to_string()),
         ParseMode::SingleQuote => Token::String(value.to_string(), false),
         ParseMode::DoubleQuote => Token::String(value.to_string(), true),
-        ParseMode::SingleDashArg => Token::Argument(value.to_string(), false),
-        ParseMode::DoubleDashArg => Token::Argument(value.to_string(), true),
     }
 }
